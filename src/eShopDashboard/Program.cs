@@ -39,7 +39,7 @@ namespace eShopDashboard
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
-                //.WriteTo.Console()
+                .WriteTo.Console()
                 .WriteTo.Seq("http://localhost:5341/")
                 .CreateLogger();
 
