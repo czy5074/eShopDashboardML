@@ -34,6 +34,7 @@ namespace eShopDashboard
             services.AddSingleton<IOrderingQueries>((sp) =>
                 new OrderingQueries(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddScoped<ICatalogQueries, CatalogQueries>();
             services.AddScoped<CatalogContextSetup>();
             services.AddScoped<OrderingContextSetup>();
 
