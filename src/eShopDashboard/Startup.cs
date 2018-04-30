@@ -3,6 +3,7 @@ using eShopDashboard.Infrastructure.Data.Catalog;
 using eShopDashboard.Infrastructure.Data.Ordering;
 using eShopDashboard.Infrastructure.Setup;
 using eShopDashboard.Queries;
+using eShopDashboard.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -34,11 +35,13 @@ namespace eShopDashboard
             services.AddSingleton<IOrderingQueries>((sp) =>
                 new OrderingQueries(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddScoped<ICatalogQueries, CatalogQueries>();
             services.AddScoped<CatalogContextSetup>();
             services.AddScoped<OrderingContextSetup>();
 
             services.AddTransient<IProductSales, ProductSales>();
             services.AddTransient<ICountrySales, CountrySales>();
+            services.Configure<CatalogSettings>(Configuration.GetSection("CatalogSettings"));
 
             services.AddMvc();
 

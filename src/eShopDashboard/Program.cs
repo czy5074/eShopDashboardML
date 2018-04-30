@@ -25,12 +25,6 @@ namespace eShopDashboard
                 {
                     config.AddEnvironmentVariables();
                 })
-                .ConfigureLogging((hostingContext, builder) =>
-                {
-                    builder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                    builder.AddConsole();
-                    builder.AddDebug();
-                })
                 .Build();
 
         public static int Main(string[] args)
