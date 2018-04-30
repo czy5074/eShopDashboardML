@@ -27,14 +27,21 @@
 ]
 */
 
-select *
-from dbo.Catalog
-
--- Orders.json
-select Id, Address_Country, OrderDate
+-- Orders.csv
+select 
+    Id, 
+    quotename(Address_Country, '''') Address_Country, 
+    '''' + Description + '''' Description, 
+    quotename(OrderDate, '''') OrderDate
 from Ordering.Orders
 
--- OrderItems.json
-select Id, OrderId, ProductId, UnitPrice, Units
+-- OrderItems.csv
+select 
+    Id, 
+    OrderId, 
+    ProductId, 
+    UnitPrice, 
+    Units, 
+    quotename(ProductName, '''') ProductName
 from Ordering.OrderItems
 

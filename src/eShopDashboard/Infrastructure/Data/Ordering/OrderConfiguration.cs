@@ -18,8 +18,10 @@ namespace eShopDashboard.Infrastructure.Data.Ordering
                 .IsRequired(true);
 
             builder.Property(o => o.Address_Country)
-                .IsRequired()
                 .HasMaxLength(100);
+
+            builder.Property(o => o.Description)
+                .HasMaxLength(1000);
         }
     }
 }

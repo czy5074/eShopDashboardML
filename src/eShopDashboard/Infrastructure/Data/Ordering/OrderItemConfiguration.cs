@@ -26,9 +26,8 @@ namespace eShopDashboard.Infrastructure.Data.Ordering
             builder.Property(oi => oi.Units)
                 .IsRequired();
 
-            //builder.HasOne<Order>()
-            //    .WithMany()
-            //    .HasForeignKey(oi => oi.OrderId);
+            builder.Property(oi => oi.ProductName)
+                .HasMaxLength(100);
         }
     }
 }
