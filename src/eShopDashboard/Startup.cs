@@ -3,6 +3,7 @@ using eShopDashboard.Infrastructure.Data.Catalog;
 using eShopDashboard.Infrastructure.Data.Ordering;
 using eShopDashboard.Infrastructure.Setup;
 using eShopDashboard.Queries;
+using eShopDashboard.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +41,7 @@ namespace eShopDashboard
 
             services.AddTransient<IProductSales, ProductSales>();
             services.AddTransient<ICountrySales, CountrySales>();
+            services.Configure<CatalogSettings>(Configuration.GetSection("CatalogSettings"));
 
             services.AddMvc();
 

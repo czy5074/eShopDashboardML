@@ -29,6 +29,12 @@
     <Folder Include="Models\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ProductImages\*.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="ProductImages\coming_soon.png" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Update="Infrastructure\Setup\CatalogTags.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

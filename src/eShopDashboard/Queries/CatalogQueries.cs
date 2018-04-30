@@ -4,17 +4,30 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using eShopDashboard.EntityModels.Catalog;
+using eShopDashboard.Settings;
+using Microsoft.Extensions.Options;
 
 namespace eShopDashboard.Queries
 {
     public class CatalogQueries : ICatalogQueries
     {
         private readonly CatalogContext _context;
+        private readonly CatalogSettings _settings;
 
         public CatalogQueries(
-            CatalogContext context)
+            CatalogContext context,
+            IOptions<CatalogSettings> options)
         {
             _context = context;
+            _settings = options.Value;
+
+        }
+
+        public async Task<CatalogItem> GetCatalogItemById(int catalogItemId)
+        {
+            return await _context.CatalogItems
+                .SingleOrDefaultAsync(ci => ci.Id == catalogItemId);
         }
 
         public async Task<IEnumerable<dynamic>> GetProductsByDescriptionAsync(string description)
@@ -27,7 +40,9 @@ namespace eShopDashboard.Queries
                     ci.CatalogBrandId,
                     ci.Description,
                     ci.Price,
-                    ci.PictureUri,
+                    PictureUri = _settings.AzureStorageEnabled 
+                        ? _settings.AzurePicBaseUrl + ci.PictureFileName 
+                        : string.Format(_settings.LocalPicBaseUrl, ci.Id),
                     color = ci.Tags.Color.JoinTags(),
                     size = ci.Tags.Size.JoinTags(),
                     shape = ci.Tags.Shape.JoinTags(),
