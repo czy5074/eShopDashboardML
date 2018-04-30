@@ -24,18 +24,6 @@ namespace eShopDashboard.Controllers
             this.countrySales = countrySales;
         }
 
-        // GET: api/Forecasting
-        //[HttpGet("product/{productId}/unitdemandestimation")]
-        //public IActionResult ProductUnitDemandEstimation(int productId, [FromQuery]int month)
-        //{
-        //    if (month == 10)
-        //    {
-        //        return Ok(153.410721);
-        //    }
-
-        //    return Ok(175.667068);
-        //}
-
         [HttpGet]
         [Route("product/{productId}/unitdemandestimation")]
         public async Task <IActionResult> GetProductUnitDemandEstimation(string productId,

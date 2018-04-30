@@ -11,17 +11,9 @@ namespace eShopDashboard.Forecasting
 {
     /// <summary>
     /// This is the input to the trained model.
-    ///
-    /// In most pipelines, not all columns that are used in training are also used in scoring. Namely, the label 
-    /// and weight columns are almost never required at scoring time. Since TLC doesn't know which columns 
-    /// are 'optional' in this sense, all the columns are listed below.
-    ///
-    /// You are free to remove any fields from the below class. If the fields are not required for scoring, the model 
-    /// will continue to work. Otherwise, the exception will be thrown when a prediction engine is created.
     /// </summary>
     public class CountryData
     {
-        // next,country,year,month,sales,avg,count,max,min,p_max,p_med,p_min,std,prev
         public CountryData(string country, int year, int month, float sales, float avg, int count, float max, float min, float p_max, float p_med, float p_min, float std, float prev)
         {
             this.country = country;
@@ -75,20 +67,22 @@ namespace eShopDashboard.Forecasting
         /// </summary>
         public async Task<CountrySalesPrediction> Predict(string modelPath, string country, int year, int month, float sales, float avg, int count, float max, float min, float p_max, float p_med, float p_min, float std, float prev)
         {
-            var env = new TlcEnvironment(conc: 1);
+            // Load model
+            var predictionEngine = await CreatePredictionEngineAsync(modelPath);
 
-            var predictionEngine = await CreatePredictionEngineAsync(env, modelPath);
+            // Build country sample
+            var countrySample = new CountryData(country, year, month, sales, avg, count, max, min, p_max, p_med, p_min, std, prev);
 
-            var inputExample = new CountryData(country, year, month, sales, avg, count, max, min, p_max, p_med, p_min, std, prev);
-
-            return predictionEngine.Predict(inputExample);
+            // Returns prediction
+            return predictionEngine.Predict(countrySample);
         }
 
         /// <summary>
         /// This function creates a prediction engine from the model located in the <paramref name="modelPath"/>.
         /// </summary>
-        private async Task<PredictionModel<CountryData, CountrySalesPrediction>> CreatePredictionEngineAsync(IHostEnvironment env, string modelPath)
+        private async Task<PredictionModel<CountryData, CountrySalesPrediction>> CreatePredictionEngineAsync(string modelPath)
         {
+            var env = new TlcEnvironment(conc: 1);
             PredictionModel<CountryData, CountrySalesPrediction> model = await PredictionModel.ReadAsync<CountryData, CountrySalesPrediction>(modelPath);
             return model;
         }
