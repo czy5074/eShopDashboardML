@@ -25,8 +25,10 @@ namespace eShopDashboard.Infrastructure.Migrations.Ordering
                     b.Property<int>("Id");
 
                     b.Property<string>("Address_Country")
-                        .IsRequired()
                         .HasMaxLength(100);
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000);
 
                     b.Property<DateTime>("OrderDate");
 
@@ -42,6 +44,9 @@ namespace eShopDashboard.Infrastructure.Migrations.Ordering
                     b.Property<int>("OrderId");
 
                     b.Property<int>("ProductId");
+
+                    b.Property<string>("ProductName")
+                        .HasMaxLength(100);
 
                     b.Property<decimal>("UnitPrice");
 
