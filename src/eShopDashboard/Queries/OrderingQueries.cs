@@ -41,5 +41,19 @@ namespace eShopDashboard.Queries
 
             return productHistory.Where(p => p.next != null && p.prev != null);
         }
+
+        public async Task<IEnumerable<dynamic>> GetCountryStatsAsync()
+        {
+            var countryStats = await GetCountryHistoryAsync(null);
+
+            return countryStats.Where(p => p.next != null && p.prev != null);
+        }
+
+        public async Task<IEnumerable<dynamic>> GetProductStatsAsync()
+        {
+            var productStats = await GetProductHistoryAsync(null);
+
+            return productStats.Where(p => p.next != null && p.prev != null);
+        }
     }
 }

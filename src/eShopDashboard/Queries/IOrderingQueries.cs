@@ -10,5 +10,9 @@ namespace eShopDashboard.Queries
         Task<IEnumerable<dynamic>> GetProductHistoryAsync(string productId);
 
         Task<IEnumerable<dynamic>> GetProductStatsAsync(string productId);
+
+        Task<IEnumerable<dynamic>> GetCountryStatsAsync();
+
+        Task<IEnumerable<dynamic>> GetProductStatsAsync();
     }
 }

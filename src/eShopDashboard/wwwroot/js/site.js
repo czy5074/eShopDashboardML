@@ -87,9 +87,9 @@ function getProductData(product) {
 }
 
 function getForecast(st, pr) {
-    var surl = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&count=${st.count}&prev=${st.prev}&units=${st.units}`;
-    var purl = `&price=${pr.price}&color=${pr.color || ""}&size=${pr.size || ""}&shape=${pr.shape || ""}&agram=${pr.agram || ""}&bgram=${pr.bgram || ""}&ygram=${pr.ygram || ""}&zgram=${pr.zgram || ""}`
-    return $.getJSON(`${apiUri.forecasting}/product/${st.productId}/unitdemandestimation${surl}${purl}`);
+    // next,productId,year,month,units,avg,count,max,min,idx,prev
+    var surl = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&count=${st.count}&prev=${st.prev}&units=${st.units}&idx=${st.idx}`;
+    return $.getJSON(`${apiUri.forecasting}/product/${st.productId}/unitdemandestimation${surl}`);
 }
 
 function getHistory(productId) {
@@ -101,10 +101,11 @@ function getStats(productId) {
 }
 
 function plotLineChart(fore1, fore2, history, description, price) {
+    if (history.length > 12)
+        history = history.slice(history.length - 12);
     for(i = 0; i < history.length; i++) {
         history[i].sales = history[i].units * price;
     }
-
     fore2 *= price;
 
     $("footer").removeClass("sticky");
@@ -273,21 +274,26 @@ function getCountryData(country) {
 }
 
 function getCountryForecast(st) {
-    var url = `?month=${st.month}&year=${st.year}&avg=${st.avg}&p_max=${st.p_max}&p_med=${st.p_med}&p_min=${st.p_min}&max=${st.max}&min=${st.min}&prev=${st.prev}&count=${st.count}&std=${st.std}&sales=${st.sales}`;
-    return $.getJSON(`${apiUri.forecasting}/country/${st.country}/salesforecast${url}`);
+    // next,country,year,month,max,min,idx,count,units,avg,prev
+    var url = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&prev=${st.prev}&count=${st.count}&avg=${st.avg}&units=${st.units}&idx=${st.idx}`;
+    return $.getJSON(`${apiUri.forecasting}/country/${st.country}/unitdemandestimation${url}`);
 }
 
 function plotLineChartCountry(fore1, fore2, historyItems, country) {
-    //for (i = 0; i < historyItems.length; i++) {
-    //    historyItems[i].sales = Math.pow(10, historyItems[i].sales);
-    //}
-    fore1 = Math.pow(10, fore1);
-    fore2 = Math.pow(10, fore2);
+    for (i = 0; i < historyItems.length; i++) {
+        historyItems[i].sales = historyItems[i].units;
+    }
+    //fore1 = Math.pow(10, fore1);
+    //fore2 = Math.pow(10, fore2);
+    fore2 = Math.round(fore2);
+
+    //if (historyItems.length>12)
+    //    historyItems = historyItems.slice(historyItems.length - 12);
 
     $("footer").removeClass("sticky");
     updateCountryStatistics(country, historyItems, fore2);
 
-    var trace_real = getTraceCountryHistory(historyItems);
+    var trace_real = getTraceCountryHistory(historyItems.slice(historyItems.length - 12));
 
     var trace_forecast = getTraceCountryForecast(
         trace_real.x,
@@ -311,7 +317,7 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
             showgrid: false,
             showline: false,
             zeroline: false,
-            tickformat: '$,.0'
+            //tickformat: '$,.0'
         },
         hovermode: "closest",
         legend: {
@@ -329,7 +335,7 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
 function getTraceCountryHistory(historyItems) {
     var y = $.map(historyItems, function (d) { return d.sales; });
     var x = $.map(historyItems, function (d) { return `${months[d.month]}<br>${d.year}`; });
-    var texts = $.map(historyItems, function (d) { return `${full_months[d.month]}<br><b>${d.sales.toCurrencyLocaleString()}</b>`; });
+    var texts = $.map(historyItems, function (d) { return `${full_months[d.month]}<br><b>${d.sales.toNumberLocaleString()}</b>`; });
 
     return {
         x: x,
@@ -368,7 +374,7 @@ function getTraceCountryForecast(labels, next_y_label, next_text, prev_text, val
     return {
         x: [labels[labels.length - 1], next_y_label],
         y: [values[values.length - 1], fore2],
-        text: [prev_text, `${next_text}<br><b>${fore2.toCurrencyLocaleString()}</b>`],
+        text: [prev_text, `${next_text}<br><b>${fore2.toNumberLocaleString()}</b>`],
         mode: 'lines+markers',
         name: 'forecasting',
         hoveron: 'points',
@@ -410,7 +416,7 @@ function updateProductStatistics(product, historyItems, forecasting) {
 function updateCountryStatistics(country, historyItems, forecasting) {
     showStatsLayers();
 
-    populateForecastDashboard(country, historyItems, forecasting);
+    populateForecastDashboard(country, historyItems, forecasting, true);
     populateHistoryTable(historyItems);
 
     refreshHeightSidebar();
@@ -420,22 +426,31 @@ function showStatsLayers() {
     $("#plot,#tableHeader,#tableHistory").removeClass('d-none');
 }
 
-function populateForecastDashboard(country, historyItems, forecasting) {
-    var values = historyItems.map(y => y.sales);
-    var total = values.slice(0, values.length - 2).reduce((previous, current) => current += previous);
+function populateForecastDashboard(country, historyItems, forecasting, units = false) {
+    var lastyear = historyItems[historyItems.length - 1].year;
+    var values = historyItems.map(y => (y.year == lastyear) ? y.sales : 0);
+    //var total = values.slice(0, values.length - 2).reduce((previous, current) => current += previous);
+    var total = values.reduce((previous, current) => current += previous);
 
-    var label = nextFullMonth(historyItems[historyItems.length - 1], true).toLowerCase() + " sales";
+    //var measure = units ? "unit" : (1).toCurrencyLocaleString().replace("1.00", "");
+    //var labelForecast = `${nextFullMonth(historyItems[historyItems.length - 1], true).toLowerCase()} ${measure} sales`;
 
-    $("#total").text(total.toCurrencyLocaleString());
-    $("#valueForecast").text(forecasting.toCurrencyLocaleString());
-    $("#labelForecast").text(label);
+    $("#labelTotal").text(`${lastyear} sales`);
+    $("#valueTotal").text(units ? total.toNumberLocaleString() : total.toCurrencyLocaleString());
+    $("#labelForecast").text(`${nextFullMonth(historyItems[historyItems.length - 1], true).toLowerCase()} sales`);
+    $("#valueForecast").text(units ? forecasting.toNumberLocaleString() : forecasting.toCurrencyLocaleString());
     $("#labelItem").text(country); 
-    $("#tableHeaderCaption").text(`Sales month / ${(1).toCurrencyLocaleString().replace("1.00","")}`)
+    $("#tableHeaderCaption").text(`Sales ${units ? "units" : (1).toCurrencyLocaleString().replace("1.00","")} / month`)
 }
 
 function populateHistoryTable(historyItems) {
     var table = '';
+    var lastYear = '';
     for (i = 0; i < historyItems.length; i++) {
+        if (historyItems[i].year != lastYear) {
+            lastYear = historyItems[i].year;
+            table += `<div class="col-11 border-bottom-highlight-table month font-weight-bold">${lastYear}</div>`;
+        }
         table += `<div class="col-8 border-bottom-highlight-table month">${full_months[historyItems[i].month]}</div> <div class="col-3 border-bottom-highlight-table">${historyItems[i].sales.toLocaleString()}</div >`;
     }
     $("#historyTable").empty().append($(table));
@@ -450,3 +465,7 @@ Number.prototype.toCurrencyLocaleString = function toCurrencyLocaleString() {
     return this.toLocaleString(currentLocale, { style: 'currency', currency: 'USD' });
 }
 
+Number.prototype.toNumberLocaleString = function toNumberLocaleString() {
+    var currentLocale = navigator.languages ? navigator.languages[0] : navigator.language;
+    return this.toLocaleString(currentLocale, { useGrouping: true }) + " units";
+}

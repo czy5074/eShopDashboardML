@@ -33,26 +33,15 @@ namespace eShopDashboard.Queries
         public async Task<IEnumerable<dynamic>> GetProductsByDescriptionAsync(string description)
         {
             var itemList = await _context.CatalogItems
-                .Where(c => c.Description.Contains(description))
+                .Where(c => c.Description.Contains(description) && c.Id >= 1501 && c.Id <= 1611)
                 .Select(ci => new
                 {
                     ci.Id,
-                    ci.CatalogBrandId,
-                    ci.Description,
                     ci.Price,
+                    ci.Description,
                     PictureUri = _settings.AzureStorageEnabled 
                         ? _settings.AzurePicBaseUrl + ci.PictureFileName 
-                        : string.Format(_settings.LocalPicBaseUrl, ci.Id),
-                    color = ci.Tags.Color.JoinTags(),
-                    size = ci.Tags.Size.JoinTags(),
-                    shape = ci.Tags.Shape.JoinTags(),
-                    quantity = ci.Tags.Quantity.JoinTags(),
-                    ci.Tags.agram,
-                    ci.Tags.bgram,
-                    ci.Tags.abgram,
-                    ci.Tags.ygram,
-                    ci.Tags.zgram,
-                    ci.Tags.yzgram
+                        : string.Format(_settings.LocalPicBaseUrl, ci.Id)
                 })
                 .ToListAsync();
 
