@@ -8,6 +8,7 @@ namespace Microsoft.eShopOnContainers.WebDashboardRazor.Models
 {
     public enum SelectedMenu
     {
+        Splash,
         Reports_Product,
         Reports_Country,
         Data_Sales,
