@@ -14,8 +14,8 @@ namespace eShopDashboard.Forecasting
     /// </summary>
     public class CountryData
     {
-        // next,country,year,month,max,min,idx,count,units,avg,prev
-        public CountryData(string country, int year, int month, float max, float min, float idx, int count, float units, float avg, float prev)
+        // next,country,year,month,max,min,idx,count,sales,avg,prev
+        public CountryData(string country, int year, int month, float max, float min, float idx, int count, float sales, float avg, float prev)
         {
             this.country = country;
 
@@ -25,7 +25,7 @@ namespace eShopDashboard.Forecasting
             this.min = min;
             this.idx = idx;
             this.count = count;
-            this.units = units;
+            this.sales = sales;
             this.avg = avg;
             this.prev = prev;
         }
@@ -37,7 +37,7 @@ namespace eShopDashboard.Forecasting
 
         public float year;
         public float month;
-        public float units;
+        public float sales;
         public float avg;
         public float count;
         public float max;
@@ -60,13 +60,13 @@ namespace eShopDashboard.Forecasting
         /// <summary>
         /// This method demonstrates how to run prediction on one example at a time.
         /// </summary>
-        public async Task<CountrySalesPrediction> Predict(string modelPath, string country, int year, int month, float max, float min, float idx, int count, float units, float avg, float prev)
+        public async Task<CountrySalesPrediction> Predict(string modelPath, string country, int year, int month, float max, float min, float idx, int count, float sales, float avg, float prev)
         {
             // Load model
             var predictionEngine = await CreatePredictionEngineAsync(modelPath);
 
             // Build country sample
-            var countrySample = new CountryData(country, year, month, max, min, idx, count, units, avg, prev);
+            var countrySample = new CountryData(country, year, month, max, min, idx, count, sales, avg, prev);
 
             // Returns prediction
             return predictionEngine.Predict(countrySample);

@@ -1,4 +1,4 @@
-insert Ordering.Orders (Id,Address_Country,OrderDate,Description) values
+﻿insert Ordering.Orders (Id,Address_Country,OrderDate,Description) values
 (1,null,'2015-01-01T00:00:00',1),
 (2,null,'2015-01-01T00:00:00',2),
 (3,'Australia','2015-01-01T00:00:00',3),
@@ -41713,4 +41713,3 @@ insert Ordering.Orders (Id,Address_Country,OrderDate,Description) values
 (41546,null,'2017-10-31T00:00:00',43),
 (41547,null,'2017-10-31T00:00:00',44),
 (41548,null,'2017-10-31T00:00:00',45);
-

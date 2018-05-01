@@ -154,7 +154,7 @@ namespace eShopForecastModelsTrainer
             ProductData dataSample = new ProductData()
             {
                 productId = "1527", month = 9, year = 2017, avg = 20, max = 41, min = 7,
-                count = 30, prev = 559, units = 628, idx = 69 
+                count = 30, prev = 559, units = 628, idx = 33 
             };
 
             // Predict sample data
@@ -164,7 +164,7 @@ namespace eShopForecastModelsTrainer
             dataSample = new ProductData()
             {
                 productId = "1527", month = 10, year = 2017, avg = 25, max = 41, min = 11,
-                count = 31, prev = 628, units = 778, idx = 70
+                count = 31, prev = 628, units = 778, idx = 34
             };
 
             prediction = model.Predict(dataSample);
@@ -173,7 +173,7 @@ namespace eShopForecastModelsTrainer
             dataSample = new ProductData()
             {
                 productId = "1511", month = 9, year = 2017, avg = 2, max = 3, min = 1,
-                count = 6, prev = 15, units = 13, idx = 69
+                count = 6, prev = 15, units = 13, idx = 33
             };
 
             prediction = model.Predict(dataSample);
@@ -182,7 +182,7 @@ namespace eShopForecastModelsTrainer
             dataSample = new ProductData()
             {
                 productId = "1511", month = 10, year = 2017, avg = 2, max = 5, min = 1,
-                count = 6, prev = 13, units = 12, idx = 70
+                count = 6, prev = 13, units = 12, idx = 34
             };
 
             prediction = model.Predict(dataSample);

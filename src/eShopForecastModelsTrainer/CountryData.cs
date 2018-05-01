@@ -12,7 +12,7 @@ namespace eShopForecastModelsTrainer
 
         public float year;
         public float month;
-        public float units;
+        public float sales;
         public float avg;
         public float count;
         public float max;

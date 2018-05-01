@@ -35,7 +35,7 @@ namespace eShopDashboard.Controllers
             IEnumerable<dynamic> items = await _queries.GetCountryStatsAsync();
 
             var typedOrderItems = items
-                .Select(c => new { c.next, c.country, c.year, c.month, c.max, c.min, c.idx, c.count, c.units, c.avg, c.prev})
+                .Select(c => new { c.next, c.country, c.year, c.month, c.max, c.min, c.idx, c.count, c.sales, c.avg, c.prev})
                 .ToList();
 
             var csvFile = File(Encoding.UTF8.GetBytes(typedOrderItems.FormatAsCSV()), "text/csv");

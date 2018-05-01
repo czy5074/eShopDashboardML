@@ -10,7 +10,7 @@ namespace eShopDashboard.Queries
         public static string ProductHistory(string productId)
         {
             var sqlCommandText = $@"
-select p.productId, p.[year], p.[month], p.units, p.[avg], p.[count], p.[max], p.[min],  (p.[year] - 2012)*12+p.[month] as idx,
+select p.productId, p.[year], p.[month], p.units, p.[avg], p.[count], p.[max], p.[min],  (p.[year] - 2015)*12+p.[month] as idx,
     LAG (units, 1) OVER (PARTITION BY p.productId ORDER BY p.productId, p.date) as prev,
     LEAD (units, 1) OVER (PARTITION BY p.productId ORDER BY p.productId, p.date) as [next]
 from (
@@ -41,9 +41,9 @@ from (
 select 
     LEAD (sum(R.sale), 1) OVER (PARTITION BY R.country ORDER BY R.[year], R.[month]) as [next],
     R.country, R.year, R.month, max(R.sale) as max, min(R.sale) as min, 
-    (R.[year] - 2012)*12+R.[month] as idx,
+    (R.[year] - 2015)*12+R.[month] as idx,
     -- max(R.p_max) as p_max, min(R.p_med) as p_med, min(R.p_min) as p_min, 
-    count(R.sale) as count, sum(R.sale) as units, avg(R.sale) as avg,
+    count(R.sale) as count, sum(R.sale) as sales, avg(R.sale) as avg,
     LAG (sum(R.sale), 1) OVER (PARTITION BY R.country ORDER BY R.[year], R.[month]) as prev
 from (
     select S.country, S.[month], S.[year], S.sale,

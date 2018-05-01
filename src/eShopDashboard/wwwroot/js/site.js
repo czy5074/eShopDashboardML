@@ -88,7 +88,7 @@ function getProductData(product) {
 
 function getForecast(st, pr) {
     // next,productId,year,month,units,avg,count,max,min,idx,prev
-    var surl = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&count=${st.count}&prev=${st.prev}&units=${st.units}&idx=${st.idx}`;
+    var surl = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&count=${st.count}&prev=${st.prev}&sales=${st.sales}&idx=${st.idx}`;
     return $.getJSON(`${apiUri.forecasting}/product/${st.productId}/unitdemandestimation${surl}`);
 }
 
@@ -275,18 +275,15 @@ function getCountryData(country) {
 
 function getCountryForecast(st) {
     // next,country,year,month,max,min,idx,count,units,avg,prev
-    var url = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&prev=${st.prev}&count=${st.count}&avg=${st.avg}&units=${st.units}&idx=${st.idx}`;
+    var url = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&prev=${st.prev}&count=${st.count}&avg=${st.avg}&sales=${st.sales}&idx=${st.idx}`;
     return $.getJSON(`${apiUri.forecasting}/country/${st.country}/unitdemandestimation${url}`);
 }
 
 function plotLineChartCountry(fore1, fore2, historyItems, country) {
-    for (i = 0; i < historyItems.length; i++) {
-        historyItems[i].sales = historyItems[i].units;
-    }
     fore2 = Math.round(fore2);
 
     $("footer").removeClass("sticky");
-    updateCountryStatistics(country, historyItems, fore2);
+    updateCountryStatistics(country, historyItems.slice(historyItems.length - 12), fore2);
 
     var trace_real = getTraceCountryHistory(historyItems);
 
@@ -313,7 +310,7 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
             showgrid: false,
             showline: false,
             zeroline: false,
-            //tickformat: '$,.0'
+            tickformat: '$,.0'
         },
         dragmode: 'pan',
         hovermode: "closest",
@@ -332,7 +329,7 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
 function getTraceCountryHistory(historyItems) {
     var y = $.map(historyItems, function (d) { return d.sales; });
     var x = $.map(historyItems, function (d) { return `${months[d.month]}<br>${d.year}`; });
-    var texts = $.map(historyItems, function (d) { return `${full_months[d.month]}<br><b>${d.sales.toNumberLocaleString()}</b>`; });
+    var texts = $.map(historyItems, function (d) { return `${full_months[d.month]}<br><b>${d.sales.toCurrencyLocaleString()}</b>`; });
 
     return {
         x: x,
@@ -371,7 +368,7 @@ function getTraceCountryForecast(labels, next_y_label, next_text, prev_text, val
     return {
         x: [labels[labels.length - 1], next_y_label],
         y: [values[values.length - 1], fore2],
-        text: [prev_text, `${next_text}<br><b>${fore2.toNumberLocaleString()}</b>`],
+        text: [prev_text, `${next_text}<br><b>${fore2.toCurrencyLocaleString()}</b>`],
         mode: 'lines+markers',
         name: 'forecasting',
         hoveron: 'points',
@@ -413,7 +410,7 @@ function updateProductStatistics(product, historyItems, forecasting) {
 function updateCountryStatistics(country, historyItems, forecasting) {
     showStatsLayers();
 
-    populateForecastDashboard(country, historyItems, forecasting, true);
+    populateForecastDashboard(country, historyItems, forecasting);
     populateHistoryTable(historyItems);
 
     refreshHeightSidebar();

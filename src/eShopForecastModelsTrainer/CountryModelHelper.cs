@@ -71,10 +71,10 @@ namespace eShopForecastModelsTrainer
 
             // This schema specifies the column name, type (TX for text or R4 for float) and column order
             // of the input training file
-            // next,country,year,month,max,min,idx,count,units,avg,prev
+            // next,country,year,month,max,min,idx,count,sales,avg,prev
             var dataSchema = "col=Label:R4:0 col=country:TX:1 col=year:R4:2 col=month:R4:3 " +
                              "col=max:R4:4 col=min:R4:5 col=idx:R4:6 col=count:R4:7 " +
-                             "col=units:R4:8 col=avg:R4:9 col=prev:R4:10 " +
+                             "col=sales:R4:8 col=avg:R4:9 col=prev:R4:10 " +
                              "header+ sep=,";
 
             var importData = new ImportText { CustomSchema = dataSchema };
@@ -90,7 +90,7 @@ namespace eShopForecastModelsTrainer
                 nameof(CountryData.min),
                 nameof(CountryData.idx),
                 nameof(CountryData.count),
-                nameof(CountryData.units),
+                nameof(CountryData.sales),
                 nameof(CountryData.avg),
                 nameof(CountryData.prev));
             var numericalConcatenated = experiment.Add(numericalConcatenate);
@@ -158,65 +158,65 @@ namespace eShopForecastModelsTrainer
                 country = "17", // Netherlands
                 month = 9,
                 year = 2017,
-                avg = 152.3F,
-                max = 274,
-                min = 61,
-                idx = 69,
-                prev = 4095,
+                avg = 286.095F,
+                max = 487.2F,
+                min = 121.35F,
+                idx = 33,
+                prev = 8053.95F,
                 count = 30,
-                units = 4569
+                sales = 8582.85F
             };
             // Predict sample data
             var prediction = model.Predict(dataSample);
-            Console.WriteLine($"Country: Netherlands, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (units): 2664, Forecasting (units): {prediction.Score}");
+            Console.WriteLine($"Country: Netherlands, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (US$): 5202.9, Forecasting (US$): {prediction.Score}");
 
             dataSample = new CountryData()
             {
                 country = "17", // Netherlands
                 month = 10,
                 year = 2017,
-                avg = 111,
-                max = 205,
-                min = 49,
-                idx = 70,
-                prev = 4569,
+                avg = 216.7875F,
+                max = 384.15F,
+                min = 103.35F,
+                idx = 34,
+                prev = 8582.85F,
                 count = 24,
-                units = 2664,
+                sales = 5202.9F,
             };
             prediction = model.Predict(dataSample);
-            Console.WriteLine($"Country: Netherlands, month: {dataSample.month + 1}, year: {dataSample.year} - Forecasting (units):  {prediction.Score}");
+            Console.WriteLine($"Country: Netherlands, month: {dataSample.month + 1}, year: {dataSample.year} - Forecasting (US$):  {prediction.Score}");
 
             dataSample = new CountryData()
             {
                 country = "33", // United States
                 month = 9,
                 year = 2017,
-                avg = 269.565217F,
-                max = 378,
-                min = 142,
-                idx = 69,
-                prev = 8356,
+                avg = 1405.153043F,
+                max = 1935.91F,
+                min = 821.94F,
+                idx = 33,
+                prev = 42396.42F,
                 count = 23,
-                units = 6200
+                sales = 32318.52F
             };
             prediction = model.Predict(dataSample);
-            Console.WriteLine($"Country: United States, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (units): 4086, Forecasting (units): {prediction.Score}");
+            Console.WriteLine($"Country: United States, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (US$): 21373.14, Forecasting (US$): {prediction.Score}");
 
             dataSample = new CountryData()
             {
                 country = "33", // United States
                 month = 10,
                 year = 2017,
-                avg = 255.375F,
-                max = 391,
-                min = 150,
-                idx = 70,
-                prev = 6200,
+                avg = 1335.82125F,
+                max = 1925.01F,
+                min = 780.36F,
+                idx = 34,
+                prev = 32318.52F,
                 count = 16,
-                units = 4086,
+                sales = 21373.14F,
             };
             prediction = model.Predict(dataSample);
-            Console.WriteLine($"Country: United States, month: {dataSample.month + 1}, year: {dataSample.year} - Forecasting (units):  {prediction.Score}");
+            Console.WriteLine($"Country: United States, month: {dataSample.month + 1}, year: {dataSample.year} - Forecasting (US$):  {prediction.Score}");
         }
     }
 }

@@ -47,10 +47,10 @@ namespace eShopDashboard.Controllers
             [FromQuery]int month, [FromQuery]float avg,
             [FromQuery]float max, [FromQuery]float min,
             [FromQuery]float prev, [FromQuery]int count,
-            [FromQuery]float units, [FromQuery]float idx)
+            [FromQuery]float sales, [FromQuery]float idx)
         {
             // next,country,year,month,max,min,idx,count,units,avg,prev
-            var nextMonthSalesForecast = await countrySales.Predict($"{appSettings.AIModelsPath}/country_month_fastTreeTweedle.zip", country, year, month, max, min, idx, count, units, avg, prev);
+            var nextMonthSalesForecast = await countrySales.Predict($"{appSettings.AIModelsPath}/country_month_fastTreeTweedle.zip", country, year, month, max, min, idx, count, sales, avg, prev);
 
             return Ok(nextMonthSalesForecast.Score);
         }
