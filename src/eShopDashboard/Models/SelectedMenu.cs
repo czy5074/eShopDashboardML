@@ -10,11 +10,6 @@ namespace Microsoft.eShopOnContainers.WebDashboardRazor.Models
     {
         Reports_Product,
         Reports_Country,
-        Data_Sales,
-        Data_Product,
-        Data_Customer,
-        Data_SalesByProduct,
-        Data_SalesByCountry
     }
 
     public static class ViewDataHelpers

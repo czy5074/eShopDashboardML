@@ -10,7 +10,7 @@ namespace eShopDashboard.Queries
         public static string ProductHistory(string productId)
         {
             var sqlCommandText = $@"
-select p.productId, p.[year], p.[month], p.units, p.[avg], p.[count], p.[max], p.[min],
+select p.productId, p.[year], p.[month], p.units, p.[avg], p.[count], p.[max], p.[min],  (p.[year] - 2015)*12+p.[month] as idx,
     LAG (units, 1) OVER (PARTITION BY p.productId ORDER BY p.productId, p.date) as prev,
     LEAD (units, 1) OVER (PARTITION BY p.productId ORDER BY p.productId, p.date) as [next]
 from (
@@ -39,9 +39,11 @@ from (
         {
             var sqlCommandText = $@"
 select 
-    LEAD (log10(sum(R.sale)), 1) OVER (PARTITION BY R.country ORDER BY R.[year], R.[month]) as [next],
-    R.country, R.year, R.month, max(R.sale) as max, min(R.sale) as min, max(R.p_max) as p_max, min(R.p_med) as p_med, min(R.p_min) as p_min, 
-    count(R.sale) as count, sum(R.sale) as sales, avg(R.sale) as avg, stdevp(R.sale) as std,
+    LEAD (sum(R.sale), 1) OVER (PARTITION BY R.country ORDER BY R.[year], R.[month]) as [next],
+    R.country, R.year, R.month, max(R.sale) as max, min(R.sale) as min, 
+    (R.[year] - 2015)*12+R.[month] as idx,
+    -- max(R.p_max) as p_max, min(R.p_med) as p_med, min(R.p_min) as p_min, 
+    count(R.sale) as count, sum(R.sale) as sales, avg(R.sale) as avg,
     LAG (sum(R.sale), 1) OVER (PARTITION BY R.country ORDER BY R.[year], R.[month]) as prev
 from (
     select S.country, S.[month], S.[year], S.sale,
@@ -51,7 +53,7 @@ from (
         from 
         (select min(T.country) as country, min(T.year) as [year], min(T.month) as [month], sum(T.sale) as sale
             from (
-            select oo.Address_Country as country, oo.Id as id, YEAR(oo.OrderDate) as [year], MONTH(oo.OrderDate) as [month], oi.UnitPrice * oi.Units as sale
+            select oo.Description as country, oo.Id as id, YEAR(oo.OrderDate) as [year], MONTH(oo.OrderDate) as [month], oi.UnitPrice * oi.Units as sale
             from [ordering].[orderItems] oi
             inner join [ordering].[orders] oo on oi.OrderId = oo.Id {(string.IsNullOrEmpty(country) ? string.Empty : "and oo.Address_Country = (@country)")}
         ) as T

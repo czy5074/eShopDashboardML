@@ -33,7 +33,7 @@
                 <nav class="navbar navbar-expand flex-row flex-md-column align-items-start p-md-0">
                     <div class="collapse navbar-collapse w-100">
                         <ul class="flex-row flex-md-column navbar-nav w-100 justify-content-between" style="font-size: 10pt;">
-                            <li class="nav-item d-none d-sm-inline mt-md-3 mb-md-1">
+                            <li class="nav-item d-sm-inline mt-md-3 mb-md-1">
                                 <img src="~/images/logo_eshop_AI.png" style="width: 150px;" />
                             </li>
                             <li class="nav-item mt-md-5 d-none d-md-block">
@@ -41,14 +41,14 @@
                             </li>
                             <li class="nav-item mt-md-2 @(selectedMenu==SelectedMenu.Reports_Product ? "selected" : String.Empty)">
                                 <a class="nav-link px-1 py-0 text-nowrap" asp-page="/Reports/Products">
-                                    <i class="eshop-icon icon-product" title="Produts"></i>
-                                    <span class="d-none d-md-inline-block">Products</span>
+                                    <i class="eshop-icon icon-product d-none d-md-inline-block" title="Produts"></i>
+                                    <span>Product</span>
                                 </a>
                             </li>
                             <li class="nav-item pt-md-2 pb-md-4 @(selectedMenu==SelectedMenu.Reports_Country ? "selected" : String.Empty)">
                                 <a class="nav-link px-1 py-0 text-nowrap" asp-page="/Reports/Countries">
-                                    <i class="eshop-icon icon-country" title="Country"></i>
-                                    <span class="d-none d-md-inline-block">Country</span>
+                                    <i class="eshop-icon icon-country d-none d-md-inline-block" title="Country"></i>
+                                    <span>Country</span>
                                 </a>
                             </li>
                         </ul>
@@ -75,17 +75,11 @@
                             <span class="align-middle">eshop_feedback@service.microsoft.com</span>
                         </a>
                     </div>
-                    <div class="col text-center mt-3 mb-4 pr-md-4">
-                        <i class="eshop-icon icon-wiki align-middle es-color" style="font-size: 28pt"></i>
-                        <a href="https://github.com/dotnet-architecture/eShopOnContainersAI/wiki">
-                            <span class="align-middle">eShopOnContainers<b>AI</b>/wiki</span>
-                        </a>
-                    </div>
 
                     <div class="w-100 m-3 border-bottom-highlight-footer"></div>
 
                     <div class="col text-center my-2">
-                        eShopOnContainers<b>AI</b> @DateTime.Now.Year
+                        eShopDashboard<b>AI</b> @DateTime.Now.Year
                     </div>
                 </footer>
 

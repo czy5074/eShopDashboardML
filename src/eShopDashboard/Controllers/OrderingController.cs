@@ -2,6 +2,8 @@
 using eShopDashboard.Queries;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace eShopDashboard.Controllers
@@ -27,6 +29,20 @@ namespace eShopDashboard.Controllers
             return Ok(items);
         }
 
+        [HttpGet("country/stats")]
+        public async Task<IActionResult> CountryStats()
+        {
+            IEnumerable<dynamic> items = await _queries.GetCountryStatsAsync();
+
+            var typedOrderItems = items
+                .Select(c => new { c.next, c.country, c.year, c.month, c.max, c.min, c.idx, c.count, c.sales, c.avg, c.prev})
+                .ToList();
+
+            var csvFile = File(Encoding.UTF8.GetBytes(typedOrderItems.FormatAsCSV()), "text/csv");
+            csvFile.FileDownloadName = "countries.stats.csv";
+            return csvFile;
+        }
+
         [HttpGet("product/{productId}/history")]
         public async Task<IActionResult> ProductHistory(string productId)
         {
@@ -45,6 +61,20 @@ namespace eShopDashboard.Controllers
             IEnumerable<dynamic> stats = await _queries.GetProductStatsAsync(productId);
 
             return Ok(stats);
+        }
+
+        [HttpGet("product/stats")]
+        public async Task<IActionResult> ProductStats()
+        {
+            IEnumerable<dynamic> items = await _queries.GetProductStatsAsync();
+
+            var typedOrderItems = items
+                .Select(c => new { c.next, c.productId, c.year, c.month, c.units, c.avg, c.count, c.max, c.min, c.idx, c.prev })
+                .ToList();
+
+            var csvFile = File(Encoding.UTF8.GetBytes(typedOrderItems.FormatAsCSV()), "text/csv");
+            csvFile.FileDownloadName = "products.stats.csv";
+            return csvFile;
         }
     }
 }

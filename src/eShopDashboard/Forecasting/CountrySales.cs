@@ -14,21 +14,19 @@ namespace eShopDashboard.Forecasting
     /// </summary>
     public class CountryData
     {
-        public CountryData(string country, int year, int month, float sales, float avg, int count, float max, float min, float p_max, float p_med, float p_min, float std, float prev)
+        // next,country,year,month,max,min,idx,count,sales,avg,prev
+        public CountryData(string country, int year, int month, float max, float min, float idx, int count, float sales, float avg, float prev)
         {
             this.country = country;
 
             this.year = year;
             this.month = month;
-            this.sales = sales;
-            this.avg = avg;
-            this.count = count;
             this.max = max;
             this.min = min;
-            this.p_max = p_max;
-            this.p_med = p_med;
-            this.p_min = p_min;
-            this.std = std;
+            this.idx = idx;
+            this.count = count;
+            this.sales = sales;
+            this.avg = avg;
             this.prev = prev;
         }
 
@@ -44,10 +42,7 @@ namespace eShopDashboard.Forecasting
         public float count;
         public float max;
         public float min;
-        public float p_max;
-        public float p_med;
-        public float p_min;
-        public float std;
+        public float idx;
         public float prev;
     }
 
@@ -65,13 +60,13 @@ namespace eShopDashboard.Forecasting
         /// <summary>
         /// This method demonstrates how to run prediction on one example at a time.
         /// </summary>
-        public async Task<CountrySalesPrediction> Predict(string modelPath, string country, int year, int month, float sales, float avg, int count, float max, float min, float p_max, float p_med, float p_min, float std, float prev)
+        public async Task<CountrySalesPrediction> Predict(string modelPath, string country, int year, int month, float max, float min, float idx, int count, float sales, float avg, float prev)
         {
             // Load model
             var predictionEngine = await CreatePredictionEngineAsync(modelPath);
 
             // Build country sample
-            var countrySample = new CountryData(country, year, month, sales, avg, count, max, min, p_max, p_med, p_min, std, prev);
+            var countrySample = new CountryData(country, year, month, max, min, idx, count, sales, avg, prev);
 
             // Returns prediction
             return predictionEngine.Predict(countrySample);

@@ -59,6 +59,9 @@ namespace eShopForecastModelsTrainer
         /// <returns></returns>
         private static IPredictorModel CreateProductModelUsingExperiment(string dataPath)
         {
+            Console.WriteLine("**********************************");
+            Console.WriteLine("Training product forecasting model");
+
             // TlcEnvironment holds the experiment's session
             TlcEnvironment tlcEnvironment = new TlcEnvironment(seed: 1);
             Experiment experiment = tlcEnvironment.CreateExperiment();
@@ -67,9 +70,9 @@ namespace eShopForecastModelsTrainer
 
             // This schema specifies the column name, type (TX for text or R4 for float) and column order
             // of the input training file
+            // next,productId,year,month,units,avg,count,max,min,idx,prev
             var dataSchema = "col=Label:R4:0 col=productId:TX:1 col=year:R4:2 col=month:R4:3 col=units:R4:4 col=avg:R4:5 " +
-                             "col=count:R4:6 col=max:R4:7 col=min:R4:8 col=prev:R4:9 col=price:R4:10 " +
-                             "col=color:TX:11 col=size:TX:12 col=shape:TX:13 col=agram:TX:14 col=bgram:TX:15 col=ygram:TX:16 col=zgram:TX:17 " +
+                             "col=count:R4:6 col=max:R4:7 col=min:R4:8 col=idx:R4:9 col=prev:R4:10 " +
                              "header+ sep=,";
 
             var importData = new ImportText { CustomSchema = dataSchema };
@@ -87,20 +90,13 @@ namespace eShopForecastModelsTrainer
                 nameof(ProductData.max),
                 nameof(ProductData.min),
                 nameof(ProductData.prev),
-                nameof(ProductData.price));
+                nameof(ProductData.idx));
             var numericalConcatenated = experiment.Add(numericalConcatenate);
 
             // The second group is for categorical features, in a vecor named CategoryFeatures
             var categoryConcatenate = new ConcatColumns { Data = numericalConcatenated.OutputData };
             categoryConcatenate.AddColumn("CategoryFeatures", 
-                nameof(ProductData.productId),
-                nameof(ProductData.color),
-                nameof(ProductData.size),
-                nameof(ProductData.shape),
-                nameof(ProductData.agram),
-                nameof(ProductData.bgram),
-                nameof(ProductData.ygram),
-                nameof(ProductData.zgram));
+                nameof(ProductData.productId));
             var categoryConcatenated = experiment.Add(categoryConcatenate);
 
             var categorize = new CatTransformDict { Data = categoryConcatenated.OutputData };
@@ -148,24 +144,27 @@ namespace eShopForecastModelsTrainer
         /// <returns></returns>
         public static async Task PredictSamples(string outputModelPath = "product_month_fastTreeTweedle.zip")
         {
-            // Read the model that has been previously saved by SaveModel
+            Console.WriteLine("*********************************");
+            Console.WriteLine("Testing product forecasting model");
+
+            // Read the model that has been previously saved by the method SaveModel
             PredictionModel<ProductData, ProductUnitPrediction> model = await PredictionModel.ReadAsync<ProductData, ProductUnitPrediction>(outputModelPath);
 
             // Build sample data
             ProductData dataSample = new ProductData()
             {
-                productId = "263", month = 10, year = 2017, avg = 91, max = 370, min = 1,
-                count = 10, prev = 1675, units = 910, price = 1.79F, size = "jumbo", agram = "bag", zgram = "owls"
+                productId = "1527", month = 9, year = 2017, avg = 20, max = 41, min = 7,
+                count = 30, prev = 559, units = 628, idx = 33 
             };
 
             // Predict sample data
             ProductUnitPrediction prediction = model.Predict(dataSample);
-            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real value (units): 551, Forecasting (units): {prediction.Score}");
+            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real value (units): 778, Forecasting (units): {prediction.Score}");
 
             dataSample = new ProductData()
             {
-                productId = "263", month = 11, year = 2017, avg = 29, max = 221, min = 1,
-                count = 19, prev = 910, units = 551, price = 1.79F, size = "jumbo", agram = "bag", zgram = "owls"
+                productId = "1527", month = 10, year = 2017, avg = 25, max = 41, min = 11,
+                count = 31, prev = 628, units = 778, idx = 34
             };
 
             prediction = model.Predict(dataSample);
@@ -173,17 +172,17 @@ namespace eShopForecastModelsTrainer
 
             dataSample = new ProductData()
             {
-                productId = "988", month = 10, year = 2017, avg = 43, max = 220, min = 1,
-                count = 25, prev = 1036, units = 1094, price = 1.79F, size = "jumbo", agram = "storage", bgram = "bag", zgram = "suki"
+                productId = "1511", month = 9, year = 2017, avg = 2, max = 3, min = 1,
+                count = 6, prev = 15, units = 13, idx = 33
             };
 
             prediction = model.Predict(dataSample);
-            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real Value (units): 1076, Forecasting (units): {prediction.Score}");
+            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real Value (units): 12, Forecasting (units): {prediction.Score}");
 
             dataSample = new ProductData()
             {
-                productId = "988", month = 11, year = 2017, avg = 41, max = 225, min = 4,
-                count = 26, prev = 1094, units = 1076, price = 1.79F, size = "jumbo", agram = "storage", bgram = "bag", zgram = "suki"
+                productId = "1511", month = 10, year = 2017, avg = 2, max = 5, min = 1,
+                count = 6, prev = 13, units = 12, idx = 34
             };
 
             prediction = model.Predict(dataSample);

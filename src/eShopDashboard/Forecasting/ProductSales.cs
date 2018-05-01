@@ -14,8 +14,8 @@ namespace eShopDashboard.Forecasting
     /// </summary>
     public class ProductData
     {
-        public ProductData(string productId, int year, int month, float units, float avg, int count, float max, float min, float prev,
-            float price, string color, string size, string shape, string agram, string bgram, string ygram, string zgram)
+        public ProductData(string productId, int year, int month, float units, float avg, 
+            int count, float max, float min, float prev, float idx)
         {
             this.productId = productId;
             this.year = year;
@@ -26,21 +26,14 @@ namespace eShopDashboard.Forecasting
             this.max = max;
             this.min = min;
             this.prev = prev;
-            this.price = price;
-
-            this.color = color;
-            this.size = size;
-            this.shape = shape;
-            this.agram = agram;
-            this.bgram = bgram;
-            this.ygram = ygram;
-            this.zgram = zgram;
+            this.idx= idx;
         }
 
         [ColumnName("Label")]
         public float next;
 
         public string productId;
+
         public float year;
         public float month;
         public float units;
@@ -48,15 +41,8 @@ namespace eShopDashboard.Forecasting
         public float count;
         public float max;
         public float min;
+        public float idx;
         public float prev;
-        public float price;
-        public string color;
-        public string size;
-        public string shape;
-        public string agram;
-        public string bgram;
-        public string ygram;
-        public string zgram;
     }
 
     /// <summary>
@@ -73,14 +59,14 @@ namespace eShopDashboard.Forecasting
         /// <summary>
         /// This method demonstrates how to run prediction on one example at a time.
         /// </summary>
-        public async Task<ProductUnitPrediction> Predict(string modelPath, string productId, int year, int month, float units, float avg, int count, float max, float min, float prev,
-            float price, string color, string size, string shape, string agram, string bgram, string ygram, string zgram)
+        public async Task<ProductUnitPrediction> Predict(string modelPath, string productId, int year, int month, float units, float avg, 
+            int count, float max, float min, float prev, float idx)
         {
             // Load model
             var predictionEngine = await CreatePredictionEngineAsync(modelPath);
 
             // Build country sample
-            var inputExample = new ProductData(productId, year, month, units, avg, count, max, min, prev, price, color, size, shape, agram, bgram, ygram, zgram);
+            var inputExample = new ProductData(productId, year, month, units, avg, count, max, min, prev, idx);
 
             // Returns prediction
             return predictionEngine.Predict(inputExample);

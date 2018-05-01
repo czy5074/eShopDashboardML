@@ -4,9 +4,12 @@ namespace eShopForecastModelsTrainer
 {
     public class ProductData
     {
+        // next,productId,year,month,units,avg,count,max,min,idx,prev
         [ColumnName("Label")]
         public float next;
+
         public string productId;
+
         public float year;
         public float month;
         public float units;
@@ -14,15 +17,8 @@ namespace eShopForecastModelsTrainer
         public float count;
         public float max;
         public float min;
+        public float idx;
         public float prev;
-        public float price;
-        public string color;
-        public string size;
-        public string shape;
-        public string agram;
-        public string bgram;
-        public string ygram;
-        public string zgram;
     }
 
     public class ProductUnitPrediction
