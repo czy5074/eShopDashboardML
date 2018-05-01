@@ -24,7 +24,7 @@ namespace eShopForecastModelsTrainer
         /// </summary>
         /// <param name="dataPath">Input training file path</param>
         /// <param name="outputModelPath">Trained model path</param>
-        public static void SaveModel(string dataPath, string outputModelPath = "product_month_fastTreeTweedle.zip")
+        public static void SaveModel(string dataPath, string outputModelPath = "product_month_fastTreeTweedie.zip")
         {
             if (File.Exists(outputModelPath))
             {
@@ -142,7 +142,7 @@ namespace eShopForecastModelsTrainer
         /// </summary>
         /// <param name="outputModelPath">Model file path</param>
         /// <returns></returns>
-        public static async Task PredictSamples(string outputModelPath = "product_month_fastTreeTweedle.zip")
+        public static async Task PredictSamples(string outputModelPath = "product_month_fastTreeTweedie.zip")
         {
             Console.WriteLine("*********************************");
             Console.WriteLine("Testing product forecasting model");
