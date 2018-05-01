@@ -1,24 +1,28 @@
-﻿using System;
-using System.ComponentModel;
-using eShopDashboard.Infrastructure.Data.Catalog;
+﻿using eShopDashboard.Infrastructure.Data.Catalog;
+using eShopDashboard.Infrastructure.Data.Ordering;
 using eShopDashboard.Infrastructure.Setup;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.IO;
-using System.Threading;
-using eShopDashboard.Infrastructure.Data.Ordering;
 using Serilog;
 using Serilog.Events;
+using System;
+using System.ComponentModel;
+using System.IO;
+using System.Threading;
 
 namespace eShopDashboard
 {
     public class Program
     {
-        static BackgroundWorker _bw = new BackgroundWorker();
+        private static BackgroundWorker _bw = new BackgroundWorker
+        {
+            WorkerReportsProgress = true
+        };
+
+        private static int _seedingProgress = 0;
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
@@ -30,6 +34,11 @@ namespace eShopDashboard
                     config.AddEnvironmentVariables();
                 })
                 .Build();
+
+        public static int GetSeedingProgress()
+        {
+            return _seedingProgress;
+        }
 
         public static int Main(string[] args)
         {
@@ -50,6 +59,7 @@ namespace eShopDashboard
                 ConfigureDatabase(host);
 
                 _bw.DoWork += SeedDatabase;
+                _bw.ProgressChanged += ReportProgress;
                 _bw.RunWorkerAsync(host);
 
                 host.Run();
@@ -82,21 +92,46 @@ namespace eShopDashboard
             }
         }
 
-        private static void SeedDatabase(object sender, DoWorkEventArgs eventArgs)
+        private static void ReportProgress(object sender, ProgressChangedEventArgs eventArgs)
         {
-            var host = (IWebHost)eventArgs.Argument;
-
-            using (var scope = host.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-
-                var catalogContextSetup = services.GetService<CatalogContextSetup>();
-                catalogContextSetup.SeedAsync().Wait();
-
-                var orderingContextSetup = services.GetService<OrderingContextSetup>();
-                orderingContextSetup.SeedAsync().Wait();
-            }
+            _seedingProgress = eventArgs.ProgressPercentage;
         }
 
+        private static void SeedDatabase(object sender, DoWorkEventArgs eventArgs)
+        {
+            try
+            {
+                var host = (IWebHost)eventArgs.Argument;
+
+                for (int i = 0; i <= 100; i += 10)
+                {
+                    Log.Debug("----- SeedDatabase: {Percent}", i);
+
+                    _bw.ReportProgress(i);
+                    Thread.Sleep(500);
+                }
+
+                Log.Information("----- Seeding Database");
+
+
+                using (var scope = host.Services.CreateScope())
+                {
+                    var services = scope.ServiceProvider;
+
+                    var catalogContextSetup = services.GetService<CatalogContextSetup>();
+                    catalogContextSetup.SeedAsync().Wait();
+
+                    var orderingContextSetup = services.GetService<OrderingContextSetup>();
+                    orderingContextSetup.SeedAsync().Wait();
+                }
+
+                Log.Information("----- Database Seeded");
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "----- Exception seeding database");
+            }
+        }
     }
 }
