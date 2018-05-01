@@ -35,7 +35,7 @@ namespace eShopDashboard.Controllers
             [FromQuery]float idx)
         {
             // next,productId,year,month,units,avg,count,max,min,idx,prev
-            var nextMonthUnitDemandEstimation = await productSales.Predict($"{appSettings.AIModelsPath}/product_month_fastTreeTweedle.zip", productId, year, month, units, avg, count, max, min, prev, idx);
+            var nextMonthUnitDemandEstimation = await productSales.Predict($"{appSettings.AIModelsPath}/product_month_fastTreeTweedie.zip", productId, year, month, units, avg, count, max, min, prev, idx);
 
             return Ok(nextMonthUnitDemandEstimation.Score);
         }
@@ -50,7 +50,7 @@ namespace eShopDashboard.Controllers
             [FromQuery]float sales, [FromQuery]float idx)
         {
             // next,country,year,month,max,min,idx,count,units,avg,prev
-            var nextMonthSalesForecast = await countrySales.Predict($"{appSettings.AIModelsPath}/country_month_fastTreeTweedle.zip", country, year, month, max, min, idx, count, sales, avg, prev);
+            var nextMonthSalesForecast = await countrySales.Predict($"{appSettings.AIModelsPath}/country_month_fastTreeTweedie.zip", country, year, month, max, min, idx, count, sales, avg, prev);
 
             return Ok(nextMonthSalesForecast.Score);
         }
