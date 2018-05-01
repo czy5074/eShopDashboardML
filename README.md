@@ -3,7 +3,7 @@ eShopDashboard is a simple ASP.NET Core app with Product Sales Forecast predicti
 
 This sample app is a monolithic ASP.NET Core Razor app and it's main focus is to highlight the usage of Machine Learning .NET API by showing how to train, create and evaluate/predict models related to Product Sales Forecast prediction.
 
-The app is also accessiong a regular SQL Database for regular product catalog and orders info, as most typical ASP.NET Core apps using SQL Server (TBD: localdb or EF In-Memory database so there's no need to setup a real SQL Server).
+The app is also accessiong a regular SQL Database for regular product catalog and orders info, as most typical ASP.NET Core apps using SQL Server (by default it is a localdb SQL database so there's no need to setup a real SQL Server. The localdb database will be created with sample populated data the first time you run the app).
 
 Here's a sample screenshot of one of the forecast predictions:
 
