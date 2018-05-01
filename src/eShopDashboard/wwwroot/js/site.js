@@ -101,15 +101,13 @@ function getStats(productId) {
 }
 
 function plotLineChart(fore1, fore2, history, description, price) {
-    if (history.length > 12)
-        history = history.slice(history.length - 12);
     for(i = 0; i < history.length; i++) {
         history[i].sales = history[i].units * price;
     }
     fore2 *= price;
 
     $("footer").removeClass("sticky");
-    updateProductStatistics(description, history, fore2);
+    updateProductStatistics(description, history.slice(history.length - 12), fore2);
 
     var trace_real = TraceProductHistory(history);
 
@@ -130,6 +128,7 @@ function plotLineChart(fore1, fore2, history, description, price) {
             showgrid: false,
             showline: false,
             zeroline: false,
+            range: [trace_real.x.length - 12, trace_real.x.length],
         },
         yaxis: {
             showgrid: false,
@@ -138,6 +137,7 @@ function plotLineChart(fore1, fore2, history, description, price) {
             tickformat: '$,.0'
         },
         hovermode: "closest",
+        dragmode: 'pan',
         legend: {
             orientation: "h",
             xanchor: "center",
@@ -283,17 +283,12 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
     for (i = 0; i < historyItems.length; i++) {
         historyItems[i].sales = historyItems[i].units;
     }
-    //fore1 = Math.pow(10, fore1);
-    //fore2 = Math.pow(10, fore2);
     fore2 = Math.round(fore2);
-
-    //if (historyItems.length>12)
-    //    historyItems = historyItems.slice(historyItems.length - 12);
 
     $("footer").removeClass("sticky");
     updateCountryStatistics(country, historyItems, fore2);
 
-    var trace_real = getTraceCountryHistory(historyItems.slice(historyItems.length - 12));
+    var trace_real = getTraceCountryHistory(historyItems);
 
     var trace_forecast = getTraceCountryForecast(
         trace_real.x,
@@ -312,6 +307,7 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
             showgrid: false,
             showline: false,
             zeroline: false,
+            range: [trace_real.x.length - 12, trace_real.x.length],
         },
         yaxis: {
             showgrid: false,
@@ -319,6 +315,7 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
             zeroline: false,
             //tickformat: '$,.0'
         },
+        dragmode: 'pan',
         hovermode: "closest",
         legend: {
             orientation: "h",
@@ -429,11 +426,7 @@ function showStatsLayers() {
 function populateForecastDashboard(country, historyItems, forecasting, units = false) {
     var lastyear = historyItems[historyItems.length - 1].year;
     var values = historyItems.map(y => (y.year == lastyear) ? y.sales : 0);
-    //var total = values.slice(0, values.length - 2).reduce((previous, current) => current += previous);
     var total = values.reduce((previous, current) => current += previous);
-
-    //var measure = units ? "unit" : (1).toCurrencyLocaleString().replace("1.00", "");
-    //var labelForecast = `${nextFullMonth(historyItems[historyItems.length - 1], true).toLowerCase()} ${measure} sales`;
 
     $("#labelTotal").text(`${lastyear} sales`);
     $("#valueTotal").text(units ? total.toNumberLocaleString() : total.toCurrencyLocaleString());
