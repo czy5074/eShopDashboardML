@@ -4,6 +4,7 @@ namespace eShopForecastModelsTrainer
 {
     public class CountryData
     {
+        // next,country,year,month,max,min,idx,count,units,avg,prev
         [ColumnName("Label")]
         public float next;
 
@@ -11,15 +12,12 @@ namespace eShopForecastModelsTrainer
 
         public float year;
         public float month;
-        public float sales;
+        public float units;
         public float avg;
         public float count;
         public float max;
         public float min;
-        public float p_max;
-        public float p_med;
-        public float p_min;
-        public float std;
+        public float idx;
         public float prev;
     }
 
