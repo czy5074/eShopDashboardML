@@ -12,6 +12,7 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace eShopDashboard
 {
@@ -40,7 +41,7 @@ namespace eShopDashboard
             return _seedingProgress;
         }
 
-        public static int Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
@@ -50,17 +51,21 @@ namespace eShopDashboard
                 .WriteTo.Seq("http://localhost:5341/")
                 .CreateLogger();
 
-            Log.Information("Starting web host");
+            Log.Information("----- Starting web host");
+
+            var progressHandler = new Progress<int>(value => { _seedingProgress = value; });
 
             try
             {
                 var host = BuildWebHost(args);
 
-                ConfigureDatabase(host);
+                await ConfigureDatabaseAsync(host);
 
-                _bw.DoWork += SeedDatabase;
-                _bw.ProgressChanged += ReportProgress;
-                _bw.RunWorkerAsync(host);
+                Log.Information("----- Seeding Database");
+
+                Task seeding = Task.Run(async () => { await SeedDatabaseAsync(host, progressHandler); });
+
+                Log.Information("----- Running Host");
 
                 host.Run();
 
@@ -68,7 +73,7 @@ namespace eShopDashboard
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "Host terminated unexpectedly");
+                Log.Fatal(ex, "----- Host terminated unexpectedly");
 
                 return 1;
             }
@@ -78,55 +83,45 @@ namespace eShopDashboard
             }
         }
 
-        private static void ConfigureDatabase(IWebHost host)
+        private static async Task ConfigureDatabaseAsync(IWebHost host)
         {
             using (var scope = host.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
 
                 var catalogContext = services.GetService<CatalogContext>();
-                catalogContext.Database.Migrate();
+                await catalogContext.Database.MigrateAsync();
 
                 var orderingContext = services.GetService<OrderingContext>();
-                orderingContext.Database.Migrate();
+                await orderingContext.Database.MigrateAsync();
             }
         }
 
-        private static void ReportProgress(object sender, ProgressChangedEventArgs eventArgs)
-        {
-            _seedingProgress = eventArgs.ProgressPercentage;
-        }
-
-        private static void SeedDatabase(object sender, DoWorkEventArgs eventArgs)
+        private static async Task SeedDatabaseAsync(IWebHost host, IProgress<int> progressHandler)
         {
             try
             {
-                var host = (IWebHost)eventArgs.Argument;
-
                 for (int i = 0; i <= 100; i += 10)
                 {
-                    Log.Debug("----- SeedDatabase: {Percent}", i);
-
-                    _bw.ReportProgress(i);
+                    Log.Information($"----- Progress: {i}%");
+                    progressHandler.Report(i);
                     Thread.Sleep(500);
                 }
-
-                Log.Information("----- Seeding Database");
-
 
                 using (var scope = host.Services.CreateScope())
                 {
                     var services = scope.ServiceProvider;
 
+                    Log.Information("----- Seeding CatalogContext");
                     var catalogContextSetup = services.GetService<CatalogContextSetup>();
-                    catalogContextSetup.SeedAsync().Wait();
+                    await catalogContextSetup.SeedAsync();
 
+                    Log.Information("----- Seeding OrderingContext");
                     var orderingContextSetup = services.GetService<OrderingContextSetup>();
-                    orderingContextSetup.SeedAsync().Wait();
+                    await orderingContextSetup.SeedAsync();
                 }
 
                 Log.Information("----- Database Seeded");
-
             }
             catch (Exception ex)
             {
