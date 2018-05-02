@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -17,6 +18,9 @@ namespace eShopDashboard.Infrastructure.Setup
         private readonly ILogger<CatalogContextSetup> _logger;
         private readonly string _setupPath;
 
+        private string[] _dataLines;
+        private SeedingStatus _status;
+
         public CatalogContextSetup(
             CatalogContext dbContext,
             IHostingEnvironment env,
@@ -27,38 +31,79 @@ namespace eShopDashboard.Infrastructure.Setup
             _setupPath = Path.Combine(env.ContentRootPath, "Infrastructure", "Setup");
         }
 
-        public async Task SeedAsync()
+        public async Task<SeedingStatus> GetSeedingStatusAsync()
         {
-            if (await _dbContext.CatalogItems.AnyAsync()) return;
+            if (_status != null) return _status;
+
+            if (await _dbContext.CatalogItems.AnyAsync()) return _status = new SeedingStatus(false);
+
+            int dataLinesCount = await GetDataToLoad();
+
+            return _status = new SeedingStatus(dataLinesCount);
+        }
+
+        public async Task SeedAsync(IProgress<int> catalogProgressHandler)
+        {
+            var seedingStatus = await GetSeedingStatusAsync();
+
+            if (!seedingStatus.NeedsSeeding) return;
 
             _logger.LogInformation($@"----- Seeding CatalogContext from ""{_setupPath}""");
 
-            await SeedCatalogItemsAsync();
+            await SeedCatalogItemsAsync(catalogProgressHandler);
         }
 
-        private async Task SeedCatalogItemsAsync()
+        private async Task<int> GetDataToLoad()
+        {
+            var dataFile = Path.Combine(_setupPath, "CatalogItems.sql");
+
+            _dataLines = await File.ReadAllLinesAsync(dataFile);
+
+            //---------------------------------------------
+            // Times 2 to account for item tags processing
+            //---------------------------------------------
+
+            return _dataLines.Length * 2;
+        }
+
+        private async Task SeedCatalogItemsAsync(IProgress<int> recordsProgressHandler)
         {
             var sw = new Stopwatch();
             sw.Start();
 
+            var itemCount = 0;
+            var tagCount = 0;
+
+            void Aggregator ()
+            {
+                recordsProgressHandler.Report(itemCount + tagCount);
+            };
+
+            var itemsProgressHandler = new Progress<int>(value =>
+            {
+                itemCount = value;
+                Aggregator();
+            });
+
+            var tagsProgressHandler = new Progress<int>(value =>
+            {
+                tagCount = value;
+                Aggregator();
+            });
+
             _logger.LogInformation("----- Seeding CatalogItems");
-
-            var sqlFile = Path.Combine(_setupPath, "CatalogItems.sql");
-
-            var sqlLines = await File.ReadAllLinesAsync(sqlFile);
-
-            _logger.LogInformation("----- Inserting CatalogItems");
 
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            await batcher.ExecuteInsertCommandsAsync(sqlLines);
+            await batcher.ExecuteInsertCommandsAsync(_dataLines, itemsProgressHandler);
 
-            _logger.LogInformation($"----- CatalogItems Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
+            _logger.LogInformation("----- CatalogItems Inserted ({TotalSeconds:n3}s)", sw.Elapsed.TotalSeconds);
 
-            await SeedCatalogTagsAsync();
+
+            await SeedCatalogTagsAsync(tagsProgressHandler);
         }
 
-        private async Task SeedCatalogTagsAsync()
+        private async Task SeedCatalogTagsAsync(IProgress<int> recordsProgressHandler)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -81,6 +126,8 @@ namespace eShopDashboard.Infrastructure.Setup
                 entity.TagsJson = JsonConvert.SerializeObject(tag);
 
                 _dbContext.Update(entity);
+
+                recordsProgressHandler.Report(++i);
             }
 
             await _dbContext.SaveChangesAsync();

@@ -4,6 +4,10 @@
     ViewData["Title"] = "Country Sales Forecast";
 }
 
+@if (Program.GetSeedingProgress() < 100)
+{
+    @Html.Partial("_Seeding.cshtml")
+}
 
 <div class="row">
     <div class="col-12 bg-highlight py-3 pl-md-4" style="color: white; font-size: 17pt; line-height: 1.25">

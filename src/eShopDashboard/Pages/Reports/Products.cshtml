@@ -4,6 +4,11 @@
     ViewData["Title"] = "Product Sales Forecast";
 }
 
+@if (Program.GetSeedingProgress() < 100)
+{
+    @Html.Partial("_Seeding.cshtml")
+}
+
 <div class="row">
     <div class="col-12 bg-highlight py-3 pl-md-4" style="color: white; font-size: 17pt; line-height: 1.25">
         @ViewData["Title"]
@@ -73,7 +78,7 @@
     <script src="~/lib/js/typeahead.bundle.js"></script>
     <script src="~/lib/js/plotly-basic.min.js"></script>
     <script type="text/javascript">
-        $(function () {
+        $(function() {
             onLoadProductForecasting();
         });
     </script>
