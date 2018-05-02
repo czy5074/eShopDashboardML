@@ -1,15 +1,10 @@
-﻿using Microsoft.MachineLearning.Runtime;
-using Microsoft.MachineLearning.Runtime.Api.Experiment;
-using Microsoft.MachineLearning.Runtime.Api.Experiment.Categorical;
-using Microsoft.MachineLearning.Runtime.Api.Experiment.TweedieFastTree;
-using Microsoft.MachineLearning.Runtime.Api.Experiment.ImportTextData;
-using Microsoft.MachineLearning.Runtime.Api.Experiment.ModelOperations;
-using Microsoft.MachineLearning.Runtime.Api.Experiment.SchemaManipulation;
-using Microsoft.MachineLearning.Runtime.Data;
-using Microsoft.MachineLearning.Runtime.EntryPoints;
+﻿using ML = Microsoft.ML;
+using Microsoft.ML.Runtime;
+using Microsoft.ML.Runtime.Data;
+using Microsoft.ML.Runtime.EntryPoints;
 using System;
 using System.IO;
-using Microsoft.MachineLearning;
+using Microsoft.ML;
 using System.Threading.Tasks;
 
 namespace eShopForecastModelsTrainer
@@ -77,12 +72,12 @@ namespace eShopForecastModelsTrainer
                              "col=sales:R4:8 col=avg:R4:9 col=prev:R4:10 " +
                              "header+ sep=,";
 
-            var importData = new ImportText { CustomSchema = dataSchema };
+            var importData = new ML.Data.TextLoader { CustomSchema = dataSchema };
             var imported = experiment.Add(importData);
 
             // The experiment combines columns by data types
             // First group will be made by numerical features in a vector named NumericalFeatures
-            var numericalConcatenate = new ConcatColumns { Data = imported.Data };
+            var numericalConcatenate = new ML.Transforms.ColumnConcatenator{ Data = imported.Data };
             numericalConcatenate.AddColumn("NumericalFeatures",
                 nameof(CountryData.year),
                 nameof(CountryData.month),
@@ -96,30 +91,30 @@ namespace eShopForecastModelsTrainer
             var numericalConcatenated = experiment.Add(numericalConcatenate);
 
             // The second group is for categorical features, in a vecor named CategoryFeatures
-            var categoryConcatenate = new ConcatColumns { Data = numericalConcatenated.OutputData };
+            var categoryConcatenate = new ML.Transforms.ColumnConcatenator { Data = numericalConcatenated.OutputData };
             categoryConcatenate.AddColumn("CategoryFeatures", nameof(CountryData.country));
             var categoryConcatenated = experiment.Add(categoryConcatenate);
 
 
-            var categorize = new CatTransformDict { Data = categoryConcatenated.OutputData };
+            var categorize = new ML.Transforms.CategoricalOneHotVectorizer { Data = categoryConcatenated.OutputData };
             categorize.AddColumn("CategoryFeatures");
             var categorized = experiment.Add(categorize);
 
             // After combining columns by data type, the experiment needs all columns 
             // to be aggregated in a single column, named Features 
-            var featuresConcatenate = new ConcatColumns { Data = categorized.OutputData };
+            var featuresConcatenate = new ML.Transforms.ColumnConcatenator { Data = categorized.OutputData };
             featuresConcatenate.AddColumn("Features", "NumericalFeatures", "CategoryFeatures");
             var featuresConcatenated = experiment.Add(featuresConcatenate);
 
             // Add the Learner to the workflow. The Learner is the machine learning algorithm used to train a model
             // In this case, we use the TweedieFastTree.TrainRegression
-            var learner = new TrainRegression { TrainingData = featuresConcatenated.OutputData, NumThreads = 1 };
+            var learner = new ML.Trainers.FastTreeTweedieRegressor { TrainingData = featuresConcatenated.OutputData, NumThreads = 1 };
             var learnerOutput = experiment.Add(learner);
 
             // Add the Learner to the workflow. The Learner is the machine learning algorithm used to train a model
             // In this case, TweedieFastTree.TrainRegression was one of the best performing algorithms, but you can 
             // choose any other regression algorithm (StochasticDualCoordinateAscentRegressor,PoissonRegressor,...)
-            var combineModels = new CombineModels
+            var combineModels = new ML.Transforms.ManyHeterogeneousModelCombiner
             {
                 // Transformation nodes built before
                 TransformModels = new ArrayVar<ITransformModel>(numericalConcatenated.Model, categoryConcatenated.Model, categorized.Model, featuresConcatenated.Model),

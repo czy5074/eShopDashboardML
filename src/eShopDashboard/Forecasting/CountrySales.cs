@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.MachineLearning;
-using Microsoft.MachineLearning.Runtime;
-using Microsoft.MachineLearning.Runtime.Api;
-using Microsoft.MachineLearning.Runtime.Data;
+using Microsoft.ML;
+using Microsoft.ML.Runtime.Api;
+using Microsoft.ML.Runtime.Data;
 using System.Threading.Tasks;
 
 namespace eShopDashboard.Forecasting
