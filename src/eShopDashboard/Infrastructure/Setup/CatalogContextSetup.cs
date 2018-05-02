@@ -59,7 +59,11 @@ namespace eShopDashboard.Infrastructure.Setup
 
             _dataLines = await File.ReadAllLinesAsync(dataFile);
 
-            return _dataLines.Length;
+            //---------------------------------------------
+            // Times 2 to account for item tags processing
+            //---------------------------------------------
+
+            return _dataLines.Length * 2;
         }
 
         private async Task SeedCatalogItemsAsync(IProgress<int> recordsProgressHandler)
@@ -67,18 +71,39 @@ namespace eShopDashboard.Infrastructure.Setup
             var sw = new Stopwatch();
             sw.Start();
 
+            var itemCount = 0;
+            var tagCount = 0;
+
+            void Aggregator ()
+            {
+                recordsProgressHandler.Report(itemCount + tagCount);
+            };
+
+            var itemsProgressHandler = new Progress<int>(value =>
+            {
+                itemCount = value;
+                Aggregator();
+            });
+
+            var tagsProgressHandler = new Progress<int>(value =>
+            {
+                tagCount = value;
+                Aggregator();
+            });
+
             _logger.LogInformation("----- Seeding CatalogItems");
 
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            await batcher.ExecuteInsertCommandsAsync(_dataLines, recordsProgressHandler);
+            await batcher.ExecuteInsertCommandsAsync(_dataLines, itemsProgressHandler);
 
             _logger.LogInformation("----- CatalogItems Inserted ({TotalSeconds:n3}s)", sw.Elapsed.TotalSeconds);
 
-            await SeedCatalogTagsAsync();
+
+            await SeedCatalogTagsAsync(tagsProgressHandler);
         }
 
-        private async Task SeedCatalogTagsAsync()
+        private async Task SeedCatalogTagsAsync(IProgress<int> recordsProgressHandler)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -101,6 +126,8 @@ namespace eShopDashboard.Infrastructure.Setup
                 entity.TagsJson = JsonConvert.SerializeObject(tag);
 
                 _dbContext.Update(entity);
+
+                recordsProgressHandler.Report(++i);
             }
 
             await _dbContext.SaveChangesAsync();
