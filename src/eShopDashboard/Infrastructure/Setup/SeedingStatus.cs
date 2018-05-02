@@ -35,7 +35,7 @@ namespace eShopDashboard.Infrastructure.Setup
 
         public int RecordsToLoad { get; }
 
-        public void SetAsSeeded()
+        public void SetAsComplete()
         {
             RecordsLoaded = RecordsToLoad;
         }

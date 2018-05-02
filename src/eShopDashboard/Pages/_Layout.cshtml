@@ -116,6 +116,31 @@
             ordering: "/api/ordering",
             forecasting: "/api/forecasting"
         };
+
+        if (document.getElementById('seedingModal')) {
+            $('#seedingModal').modal({ keyboard: false });
+
+            var interval = setInterval(function() {
+                $.ajax({
+                    type: 'get',
+                    url: '/api/seeding/progress',
+                    success: function(data) {
+                        $('.progress-bar')
+                            .css('width', data + '%')
+                            .attr('aria-valuenow', data);
+
+                        $('#seedingModal').modal({ keyboard: false });
+
+                        if (data === 100) {
+                            clearInterval(interval);
+                            $('#seedingModal')
+                                .modal('hide');
+                        }
+                    }
+                });
+            },
+            3000);
+        }
     </script>
 
     @RenderSection("Scripts", required: false)

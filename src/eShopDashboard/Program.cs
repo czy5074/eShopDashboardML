@@ -23,7 +23,7 @@ namespace eShopDashboard
             WorkerReportsProgress = true
         };
 
-        private static int _seedingProgress = 0;
+        private static int _seedingProgress = 100;
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
@@ -146,6 +146,10 @@ namespace eShopDashboard
 
                     Log.Information("----- Seeding OrderingContext");
                     await orderingContextSetup.SeedAsync(orderingProgressHandler);
+
+                    seedingStatus.SetAsComplete();
+                    _seedingProgress = seedingStatus.PercentComplete;
+
                 }
 
                 Log.Information("----- Database Seeded");
