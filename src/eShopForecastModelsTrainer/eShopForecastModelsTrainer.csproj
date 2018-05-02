@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.MachineLearning" Version="0.0.1-alpha-26424-4" />
+    <PackageReference Include="Microsoft.ML" Version="0.0.1-alpha-26501-8" />
   </ItemGroup>
 
   <ItemGroup>

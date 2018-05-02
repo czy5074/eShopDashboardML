@@ -1,4 +1,4 @@
-﻿using Microsoft.MachineLearning.Runtime.Api;
+﻿using Microsoft.ML.Runtime.Api;
 
 namespace eShopForecastModelsTrainer
 {
