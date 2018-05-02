@@ -142,10 +142,12 @@ namespace eShopDashboard
                     });
 
                     Log.Information("----- Seeding CatalogContext");
-                    await catalogContextSetup.SeedAsync(catalogProgressHandler);
+                    Task catalogSeedingTask = Task.Run(async () => await catalogContextSetup.SeedAsync(catalogProgressHandler));
 
                     Log.Information("----- Seeding OrderingContext");
-                    await orderingContextSetup.SeedAsync(orderingProgressHandler);
+                    Task orderingSeedingTask = Task.Run(async () => await orderingContextSetup.SeedAsync(orderingProgressHandler));
+
+                    await Task.WhenAll(catalogSeedingTask, orderingSeedingTask);
 
                     seedingStatus.SetAsComplete();
                     _seedingProgress = seedingStatus.PercentComplete;
