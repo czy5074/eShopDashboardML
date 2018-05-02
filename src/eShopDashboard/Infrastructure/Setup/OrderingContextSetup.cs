@@ -1,4 +1,5 @@
-﻿using eShopDashboard.Infrastructure.Data.Ordering;
+﻿using System;
+using eShopDashboard.Infrastructure.Data.Ordering;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -11,8 +12,12 @@ namespace eShopDashboard.Infrastructure.Setup
     public class OrderingContextSetup
     {
         private readonly OrderingContext _dbContext;
-        private readonly IHostingEnvironment _env;
         private readonly ILogger<OrderingContextSetup> _logger;
+        private readonly string _setupPath;
+
+        private string[] _orderLines;
+        private string[] _orderItemLines;
+        private SeedingStatus _status;
 
         public OrderingContextSetup(
             OrderingContext dbContext,
@@ -20,57 +25,80 @@ namespace eShopDashboard.Infrastructure.Setup
             ILogger<OrderingContextSetup> logger)
         {
             _dbContext = dbContext;
-            _env = env;
             _logger = logger;
+            _setupPath = Path.Combine(env.ContentRootPath, "Infrastructure", "Setup");
         }
 
-        public async Task SeedAsync()
+        public async Task<SeedingStatus> GetSeedingStatusAsync()
         {
-            if (await _dbContext.Orders.AnyAsync()) return;
+            if (_status != null) return _status;
 
-            var setupPath = Path.Combine(_env.ContentRootPath, "Infrastructure", "Setup");
-            _logger.LogInformation($@"----- Seeding OrderingContext from ""{setupPath}""");
+            if (await _dbContext.Orders.AnyAsync()) return _status = new SeedingStatus(false);
 
-            await SeedOrdersAsync(setupPath);
-            await SeedOrderItemsAsync(setupPath);
+            int dataLinesCount = await GetDataToLoad();
+
+            return _status = new SeedingStatus(dataLinesCount);
         }
 
-        private async Task SeedOrderItemsAsync(string setupPath)
+        public async Task SeedAsync(IProgress<int> orderingProgressHandler)
+        {
+            var seedingStatus = await GetSeedingStatusAsync();
+
+            if (!seedingStatus.NeedsSeeding) return;
+
+            _logger.LogInformation($@"----- Seeding OrderingContext from ""{_setupPath}""");
+
+            var ordersLoaded = 0;
+            var orderItemsLoaded = 0;
+
+            var ordersProgressHandler = new Progress<int>(value =>
+            {
+                ordersLoaded = value;
+                orderingProgressHandler.Report(ordersLoaded + orderItemsLoaded);
+            });
+
+            var orderItemsProgressHandler = new Progress<int>(value =>
+            {
+                orderItemsLoaded = value;
+                orderingProgressHandler.Report(ordersLoaded + orderItemsLoaded);
+            });
+
+            await SeedOrdersAsync(ordersProgressHandler);
+            await SeedOrderItemsAsync(orderItemsProgressHandler);
+        }
+
+        private async Task<int> GetDataToLoad()
+        {
+            _orderLines = await File.ReadAllLinesAsync(Path.Combine(_setupPath, "Orders.sql"));
+            _orderItemLines = await File.ReadAllLinesAsync(Path.Combine(_setupPath, "OrderItems.sql"));
+
+            return _orderLines.Length + _orderItemLines.Length;
+        }
+
+        private async Task SeedOrderItemsAsync(IProgress<int> recordsProgressHandler)
         {
             var sw = new Stopwatch();
             sw.Start();
 
             _logger.LogInformation("----- Seeding OrderItems");
 
-            var sqlFile = Path.Combine(setupPath, "OrderItems.sql");
-
-            var sqlLines = await File.ReadAllLinesAsync(sqlFile);
-
-            _logger.LogInformation("----- Inserting OrderItems");
-
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            //await batcher.ExecuteInsertCommandsAsync(sqlLines);
+            await batcher.ExecuteInsertCommandsAsync(_orderItemLines, recordsProgressHandler);
 
             _logger.LogInformation($"----- OrderItems Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
         }
 
-        private async Task SeedOrdersAsync(string setupPath)
+        private async Task SeedOrdersAsync(IProgress<int> recordsProgressHandler)
         {
             var sw = new Stopwatch();
             sw.Start();
 
             _logger.LogInformation("----- Seeding Orders");
 
-            var sqlFile = Path.Combine(setupPath, "Orders.sql");
-
-            var sqlLines = await File.ReadAllLinesAsync(sqlFile);
-
-            _logger.LogInformation("----- Inserting Orders");
-
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            //await batcher.ExecuteInsertCommandsAsync(sqlLines);
+            await batcher.ExecuteInsertCommandsAsync(_orderLines, recordsProgressHandler);
 
             _logger.LogInformation($"----- Orders Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
         }

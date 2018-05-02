@@ -53,8 +53,6 @@ namespace eShopDashboard
 
             Log.Information("----- Starting web host");
 
-            var progressHandler = new Progress<int>(value => { _seedingProgress = value; });
-
             try
             {
                 var host = BuildWebHost(args);
@@ -63,7 +61,7 @@ namespace eShopDashboard
 
                 Log.Information("----- Seeding Database");
 
-                Task seeding = Task.Run(async () => { await SeedDatabaseAsync(host, progressHandler); });
+                Task seeding = Task.Run(async () => { await SeedDatabaseAsync(host); });
 
                 Log.Information("----- Running Host");
 
@@ -97,7 +95,7 @@ namespace eShopDashboard
             }
         }
 
-        private static async Task SeedDatabaseAsync(IWebHost host, IProgress<int> generalProgressHandler)
+        private static async Task SeedDatabaseAsync(IWebHost host)
         {
 
             try
@@ -112,14 +110,9 @@ namespace eShopDashboard
                     var orderingContextSetup = services.GetService<OrderingContextSetup>();
 
                     var catalogSeedingStatus = await catalogContextSetup.GetSeedingStatusAsync();
+                    var orderingSeedingStatus = await orderingContextSetup.GetSeedingStatusAsync();
 
-                    var seedingStatus = new SeedingStatus(catalogSeedingStatus);
-
-                    void ProgressAggregator () 
-                    {
-                        seedingStatus.RecordsLoaded = catalogSeedingStatus.RecordsLoaded;
-                        generalProgressHandler.Report(seedingStatus.PercentComplete);
-                    }
+                    var seedingStatus = new SeedingStatus(catalogSeedingStatus, orderingSeedingStatus);
 
                     if (!seedingStatus.NeedsSeeding)
                     {
@@ -128,19 +121,31 @@ namespace eShopDashboard
                         return;
                     }
 
+                    void ProgressAggregator()
+                    {
+                        seedingStatus.RecordsLoaded = catalogSeedingStatus.RecordsLoaded + orderingSeedingStatus.RecordsLoaded;
+
+                        Log.Debug("----- Seeding {SeedingPercentComplete}% complete", seedingStatus.PercentComplete);
+                        _seedingProgress = seedingStatus.PercentComplete;
+                    }
+
                     var catalogProgressHandler = new Progress<int>(value =>
                     {
                         catalogSeedingStatus.RecordsLoaded = value;
                         ProgressAggregator();
                     });
 
-                    //var orderingSeedingStatus = orderingContextSetup.GetSeedingStatus();
+                    var orderingProgressHandler = new Progress<int>(value =>
+                    {
+                        orderingSeedingStatus.RecordsLoaded = value;
+                        ProgressAggregator();
+                    });
 
                     Log.Information("----- Seeding CatalogContext");
                     await catalogContextSetup.SeedAsync(catalogProgressHandler);
 
                     Log.Information("----- Seeding OrderingContext");
-                    //await orderingContextSetup.SeedAsync();
+                    await orderingContextSetup.SeedAsync(orderingProgressHandler);
                 }
 
                 Log.Information("----- Database Seeded");

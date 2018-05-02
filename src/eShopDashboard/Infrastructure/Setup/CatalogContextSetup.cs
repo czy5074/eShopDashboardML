@@ -1,10 +1,10 @@
-﻿using System;
-using eShopDashboard.EntityModels.Catalog;
+﻿using eShopDashboard.EntityModels.Catalog;
 using eShopDashboard.Infrastructure.Data.Catalog;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -18,11 +18,11 @@ namespace eShopDashboard.Infrastructure.Setup
         private readonly ILogger<CatalogContextSetup> _logger;
         private readonly string _setupPath;
 
-        private SeedingStatus _status;
         private string[] _dataLines;
+        private SeedingStatus _status;
 
         public CatalogContextSetup(
-                    CatalogContext dbContext,
+            CatalogContext dbContext,
             IHostingEnvironment env,
             ILogger<CatalogContextSetup> logger)
         {
@@ -42,13 +42,11 @@ namespace eShopDashboard.Infrastructure.Setup
             return _status = new SeedingStatus(dataLinesCount);
         }
 
-        public async Task SeedAsync(Progress<int> catalogProgressHandler)
+        public async Task SeedAsync(IProgress<int> catalogProgressHandler)
         {
             var seedingStatus = await GetSeedingStatusAsync();
 
             if (!seedingStatus.NeedsSeeding) return;
-
-            if (await _dbContext.CatalogItems.AnyAsync()) return;
 
             _logger.LogInformation($@"----- Seeding CatalogContext from ""{_setupPath}""");
 
@@ -64,21 +62,18 @@ namespace eShopDashboard.Infrastructure.Setup
             return _dataLines.Length;
         }
 
-        private async Task SeedCatalogItemsAsync(IProgress<int> catalogProgressHandler)
+        private async Task SeedCatalogItemsAsync(IProgress<int> recordsProgressHandler)
         {
             var sw = new Stopwatch();
             sw.Start();
 
             _logger.LogInformation("----- Seeding CatalogItems");
 
-
-            _logger.LogInformation("----- Inserting CatalogItems");
-
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            await batcher.ExecuteInsertCommandsAsync(_dataLines, catalogProgressHandler);
+            await batcher.ExecuteInsertCommandsAsync(_dataLines, recordsProgressHandler);
 
-            _logger.LogInformation($"----- CatalogItems Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
+            _logger.LogInformation("----- CatalogItems Inserted ({TotalSeconds:n3}s)", sw.Elapsed.TotalSeconds);
 
             await SeedCatalogTagsAsync();
         }
@@ -112,6 +107,5 @@ namespace eShopDashboard.Infrastructure.Setup
 
             _logger.LogInformation($"----- {i} CatalogTags added ({sw.Elapsed.TotalSeconds:n3}s)");
         }
-
     }
 }
