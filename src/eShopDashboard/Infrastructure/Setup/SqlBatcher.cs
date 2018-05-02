@@ -47,7 +47,7 @@ namespace eShopDashboard.Infrastructure.Setup
         /// </summary>
         /// <param name="sqlLines"></param>
         /// <returns></returns>
-        public async Task ExecuteInsertCommandsAsync(string[] sqlLines)
+        public async Task ExecuteInsertCommandsAsync(string[] sqlLines, IProgress<int> progressHandler)
         {
             var sqlCommand = new StringBuilder();
             int lines = 0;
@@ -59,6 +59,7 @@ namespace eShopDashboard.Infrastructure.Setup
                     if (IsInsertLine(i) && PendingCommand())
                     {
                         await ExecuteCommandAsync();
+                        progressHandler.Report(i);
                     }
 
                     AddCommandLine(i);
@@ -66,6 +67,7 @@ namespace eShopDashboard.Infrastructure.Setup
                     if (IsLastLine(i))
                     {
                         await ExecuteCommandAsync();
+                        progressHandler.Report(i);
                     }
                 }
                 catch (Exception ex)

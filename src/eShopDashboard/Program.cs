@@ -97,28 +97,50 @@ namespace eShopDashboard
             }
         }
 
-        private static async Task SeedDatabaseAsync(IWebHost host, IProgress<int> progressHandler)
+        private static async Task SeedDatabaseAsync(IWebHost host, IProgress<int> generalProgressHandler)
         {
+
             try
             {
-                for (int i = 0; i <= 100; i += 10)
-                {
-                    Log.Information($"----- Progress: {i}%");
-                    progressHandler.Report(i);
-                    Thread.Sleep(500);
-                }
-
                 using (var scope = host.Services.CreateScope())
                 {
-                    var services = scope.ServiceProvider;
+                    IServiceProvider services = scope.ServiceProvider;
+
+                    Log.Information("----- Checking seeding status");
+
+                    var catalogContextSetup = services.GetService<CatalogContextSetup>();
+                    var orderingContextSetup = services.GetService<OrderingContextSetup>();
+
+                    var catalogSeedingStatus = await catalogContextSetup.GetSeedingStatusAsync();
+
+                    var seedingStatus = new SeedingStatus(catalogSeedingStatus);
+
+                    void ProgressAggregator () 
+                    {
+                        seedingStatus.RecordsLoaded = catalogSeedingStatus.RecordsLoaded;
+                        generalProgressHandler.Report(seedingStatus.PercentComplete);
+                    }
+
+                    if (!seedingStatus.NeedsSeeding)
+                    {
+                        Log.Information("----- No seeding needed");
+
+                        return;
+                    }
+
+                    var catalogProgressHandler = new Progress<int>(value =>
+                    {
+                        catalogSeedingStatus.RecordsLoaded = value;
+                        ProgressAggregator();
+                    });
+
+                    //var orderingSeedingStatus = orderingContextSetup.GetSeedingStatus();
 
                     Log.Information("----- Seeding CatalogContext");
-                    var catalogContextSetup = services.GetService<CatalogContextSetup>();
-                    await catalogContextSetup.SeedAsync();
+                    await catalogContextSetup.SeedAsync(catalogProgressHandler);
 
                     Log.Information("----- Seeding OrderingContext");
-                    var orderingContextSetup = services.GetService<OrderingContextSetup>();
-                    await orderingContextSetup.SeedAsync();
+                    //await orderingContextSetup.SeedAsync();
                 }
 
                 Log.Information("----- Database Seeded");

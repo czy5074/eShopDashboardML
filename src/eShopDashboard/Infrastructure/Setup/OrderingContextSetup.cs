@@ -50,7 +50,7 @@ namespace eShopDashboard.Infrastructure.Setup
 
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            await batcher.ExecuteInsertCommandsAsync(sqlLines);
+            //await batcher.ExecuteInsertCommandsAsync(sqlLines);
 
             _logger.LogInformation($"----- OrderItems Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
         }
@@ -70,7 +70,7 @@ namespace eShopDashboard.Infrastructure.Setup
 
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            await batcher.ExecuteInsertCommandsAsync(sqlLines);
+            //await batcher.ExecuteInsertCommandsAsync(sqlLines);
 
             _logger.LogInformation($"----- Orders Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
         }

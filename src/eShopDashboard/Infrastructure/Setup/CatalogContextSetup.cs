@@ -1,4 +1,5 @@
-﻿using eShopDashboard.EntityModels.Catalog;
+﻿using System;
+using eShopDashboard.EntityModels.Catalog;
 using eShopDashboard.Infrastructure.Data.Catalog;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -17,8 +18,11 @@ namespace eShopDashboard.Infrastructure.Setup
         private readonly ILogger<CatalogContextSetup> _logger;
         private readonly string _setupPath;
 
+        private SeedingStatus _status;
+        private string[] _dataLines;
+
         public CatalogContextSetup(
-            CatalogContext dbContext,
+                    CatalogContext dbContext,
             IHostingEnvironment env,
             ILogger<CatalogContextSetup> logger)
         {
@@ -27,31 +31,52 @@ namespace eShopDashboard.Infrastructure.Setup
             _setupPath = Path.Combine(env.ContentRootPath, "Infrastructure", "Setup");
         }
 
-        public async Task SeedAsync()
+        public async Task<SeedingStatus> GetSeedingStatusAsync()
         {
+            if (_status != null) return _status;
+
+            if (await _dbContext.CatalogItems.AnyAsync()) return _status = new SeedingStatus(false);
+
+            int dataLinesCount = await GetDataToLoad();
+
+            return _status = new SeedingStatus(dataLinesCount);
+        }
+
+        public async Task SeedAsync(Progress<int> catalogProgressHandler)
+        {
+            var seedingStatus = await GetSeedingStatusAsync();
+
+            if (!seedingStatus.NeedsSeeding) return;
+
             if (await _dbContext.CatalogItems.AnyAsync()) return;
 
             _logger.LogInformation($@"----- Seeding CatalogContext from ""{_setupPath}""");
 
-            await SeedCatalogItemsAsync();
+            await SeedCatalogItemsAsync(catalogProgressHandler);
         }
 
-        private async Task SeedCatalogItemsAsync()
+        private async Task<int> GetDataToLoad()
+        {
+            var dataFile = Path.Combine(_setupPath, "CatalogItems.sql");
+
+            _dataLines = await File.ReadAllLinesAsync(dataFile);
+
+            return _dataLines.Length;
+        }
+
+        private async Task SeedCatalogItemsAsync(IProgress<int> catalogProgressHandler)
         {
             var sw = new Stopwatch();
             sw.Start();
 
             _logger.LogInformation("----- Seeding CatalogItems");
 
-            var sqlFile = Path.Combine(_setupPath, "CatalogItems.sql");
-
-            var sqlLines = await File.ReadAllLinesAsync(sqlFile);
 
             _logger.LogInformation("----- Inserting CatalogItems");
 
             var batcher = new SqlBatcher(_dbContext.Database, _logger);
 
-            await batcher.ExecuteInsertCommandsAsync(sqlLines);
+            await batcher.ExecuteInsertCommandsAsync(_dataLines, catalogProgressHandler);
 
             _logger.LogInformation($"----- CatalogItems Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
 
@@ -87,5 +112,6 @@ namespace eShopDashboard.Infrastructure.Setup
 
             _logger.LogInformation($"----- {i} CatalogTags added ({sw.Elapsed.TotalSeconds:n3}s)");
         }
+
     }
 }
