@@ -57,11 +57,9 @@ namespace eShopDashboard
             {
                 var host = BuildWebHost(args);
 
-                await ConfigureDatabaseAsync(host);
-
                 Log.Information("----- Seeding Database");
 
-                Task seeding = Task.Run(async () => { await SeedDatabaseAsync(host); });
+                Task seeding = Task.Run(async () => { await ConfigureDatabaseAsync(host); });
 
                 Log.Information("----- Running Host");
 
@@ -83,6 +81,8 @@ namespace eShopDashboard
 
         private static async Task ConfigureDatabaseAsync(IWebHost host)
         {
+            _seedingProgress = 0;
+
             using (var scope = host.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -93,11 +93,12 @@ namespace eShopDashboard
                 var orderingContext = services.GetService<OrderingContext>();
                 await orderingContext.Database.MigrateAsync();
             }
+
+            await SeedDatabaseAsync(host);
         }
 
         private static async Task SeedDatabaseAsync(IWebHost host)
         {
-
             try
             {
                 using (var scope = host.Services.CreateScope())
