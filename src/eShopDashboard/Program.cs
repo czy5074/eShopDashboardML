@@ -65,6 +65,8 @@ namespace eShopDashboard
 
                 host.Run();
 
+                Log.Information("----- Shutting off web host");
+
                 return 0;
             }
             catch (Exception ex)

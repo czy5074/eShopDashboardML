@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,7 +50,7 @@ namespace eShopDashboard.Infrastructure.Setup
         /// <returns></returns>
         public async Task ExecuteInsertCommandsAsync(string[] sqlLines, IProgress<int> progressHandler)
         {
-            var sqlCommand = new StringBuilder();
+            var sqlBuilder = new StringBuilder();
             int lines = 0;
 
             for (int i = 0; i < sqlLines.Length; i++)
@@ -72,7 +73,7 @@ namespace eShopDashboard.Infrastructure.Setup
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"----- Exception executing sql command: \n{sqlCommand.ToString()}");
+                    _logger.LogError(ex, $"----- Exception executing sql command: \n{sqlBuilder.ToString()}");
 
                     throw;
                 }
@@ -84,18 +85,18 @@ namespace eShopDashboard.Infrastructure.Setup
 
             bool IsLastLine(int i) => i == sqlLines.Length - 1;
 
-            bool PendingCommand() => sqlCommand.Length > 0;
+            bool PendingCommand() => sqlBuilder.Length > 0;
 
             async Task ExecuteCommandAsync()
             {
                 var sw = new Stopwatch();
                 sw.Start();
 
-                await _database.ExecuteSqlCommandAsync(sqlCommand.ToString());
+                await _database.ExecuteSqlCommandAsync(sqlBuilder.ToString());
 
                 _logger.LogDebug($"----- Executed {lines} lines sql command ({sw.Elapsed.TotalMilliseconds:n3}ms)");
 
-                sqlCommand.Clear();
+                sqlBuilder.Clear();
                 lines = 0;
             }
 
@@ -104,7 +105,70 @@ namespace eShopDashboard.Infrastructure.Setup
                 if (string.IsNullOrWhiteSpace(sqlLines[i])) return;
 
                 lines++;
-                sqlCommand.AppendLine(sqlLines[i]);
+                sqlBuilder.AppendLine(sqlLines[i]);
+            }
+        }
+
+        public async Task ExecuteInsertSqlCommandsAsync(string[] sqlLines, IProgress<int> progressHandler, SqlConnection connection)
+        {
+            var sqlBuilder = new StringBuilder();
+            int lines = 0;
+
+            for (int i = 0; i < sqlLines.Length; i++)
+            {
+                try
+                {
+                    if (IsInsertLine(i) && PendingCommand())
+                    {
+                        await ExecuteCommandAsync();
+                        progressHandler.Report(i);
+                    }
+
+                    AddCommandLine(i);
+
+                    if (IsLastLine(i))
+                    {
+                        await ExecuteCommandAsync();
+                        progressHandler.Report(i);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"----- Exception executing sql command: \n{sqlBuilder.ToString()}");
+
+                    throw;
+                }
+            }
+
+            return;
+
+            bool IsInsertLine(int i) => sqlLines[i].StartsWith("insert", StringComparison.InvariantCultureIgnoreCase);
+
+            bool IsLastLine(int i) => i == sqlLines.Length - 1;
+
+            bool PendingCommand() => sqlBuilder.Length > 0;
+
+            async Task ExecuteCommandAsync()
+            {
+                var sw = new Stopwatch();
+                sw.Start();
+
+                var sqlCommand = new SqlCommand(sqlBuilder.ToString(), connection);
+
+                await sqlCommand.ExecuteNonQueryAsync();
+
+                _logger.LogDebug($"----- Executed {lines} lines sql command ({sw.Elapsed.TotalMilliseconds:n3}ms)");
+
+                sqlBuilder.Clear();
+                lines = 0;
+            }
+
+            void AddCommandLine(int i)
+            {
+                if (string.IsNullOrWhiteSpace(sqlLines[i])) return;
+
+                lines++;
+                sqlBuilder.AppendLine(sqlLines[i]);
             }
         }
     }
