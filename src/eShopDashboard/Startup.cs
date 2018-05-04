@@ -1,4 +1,4 @@
-using eShopDashboard.Forecasting;
+using eShopDashboard.Forecast;
 using eShopDashboard.Infrastructure.Data.Catalog;
 using eShopDashboard.Infrastructure.Data.Ordering;
 using eShopDashboard.Infrastructure.Setup;
@@ -83,7 +83,7 @@ namespace eShopDashboard
             app.UseSwagger()
               .UseSwaggerUI(c =>
               {
-                  c.SwaggerEndpoint($"{ (!string.IsNullOrEmpty(pathBase) ? pathBase : string.Empty) }/swagger/v1/swagger.json", "AI.SalesForecasting.MLNet.API V1");
+                  c.SwaggerEndpoint($"{ (!string.IsNullOrEmpty(pathBase) ? pathBase : string.Empty) }/swagger/v1/swagger.json", "eShopDashboard.API V1");
               });
         }
     }

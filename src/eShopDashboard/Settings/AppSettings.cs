@@ -2,6 +2,6 @@
 {
     public class AppSettings
     {
-        public string AIModelsPath { get; set; }
+        public string ForecastModelsPath { get; set; }
     }
 }

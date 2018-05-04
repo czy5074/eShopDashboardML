@@ -1,5 +1,5 @@
 @font-face {
-  font-family: 'eShopOnContainersAI';
+  font-family: 'eShop';
   src:  url('../fonts/icons.eot?6tybwz');
   src:  url('../fonts/icons.eot?6tybwz#iefix') format('embedded-opentype'),
     url('../fonts/icons.ttf?6tybwz') format('truetype'),
@@ -11,7 +11,7 @@
 
 i.eshop-icon {
     /* use !important to prevent issues with browser extensions that change fonts */
-    font-family: 'eShopOnContainersAI' !important;
+    font-family: 'eShop' !important;
     speak: none;
     font-style: normal;
     font-weight: normal;

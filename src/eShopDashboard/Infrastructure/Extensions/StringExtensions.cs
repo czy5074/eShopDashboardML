@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace eShopDashboard.Extensions
+namespace eShopDashboard.Infrastructure.Extensions
 {
     public static class StringExtensions
     {

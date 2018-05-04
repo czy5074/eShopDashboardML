@@ -43,10 +43,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Update="ModelsAI\country_month_fastTreeTweedie.zip">
+    <None Update="Forecast\Models\country_month_fastTreeTweedie.zip">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="ModelsAI\product_month_fastTreeTweedie.zip">
+    <None Update="Forecast\Models\product_month_fastTreeTweedie.zip">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
