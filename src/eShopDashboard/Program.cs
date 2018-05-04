@@ -10,6 +10,7 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,11 +19,6 @@ namespace eShopDashboard
 {
     public class Program
     {
-        private static BackgroundWorker _bw = new BackgroundWorker
-        {
-            WorkerReportsProgress = true
-        };
-
         private static int _seedingProgress = 100;
 
         public static IWebHost BuildWebHost(string[] args) =>
@@ -65,6 +61,8 @@ namespace eShopDashboard
 
                 host.Run();
 
+                Log.Information("----- Web host stopped");
+
                 return 0;
             }
             catch (Exception ex)
@@ -95,6 +93,8 @@ namespace eShopDashboard
             }
 
             await SeedDatabaseAsync(host);
+
+            _seedingProgress = 100;
         }
 
         private static async Task SeedDatabaseAsync(IWebHost host)
@@ -111,9 +111,13 @@ namespace eShopDashboard
                     var orderingContextSetup = services.GetService<OrderingContextSetup>();
 
                     var catalogSeedingStatus = await catalogContextSetup.GetSeedingStatusAsync();
+                    Log.Information("----- SeedingStatus ({Context}): {@SeedingStatus}", "Catalog", catalogSeedingStatus);
+
                     var orderingSeedingStatus = await orderingContextSetup.GetSeedingStatusAsync();
+                    Log.Information("----- SeedingStatus ({Context}): {@SeedingStatus}", "Ordering", orderingSeedingStatus);
 
                     var seedingStatus = new SeedingStatus(catalogSeedingStatus, orderingSeedingStatus);
+                    Log.Information("----- SeedingStatus ({Context}): {@SeedingStatus}", "Aggregated", seedingStatus);
 
                     if (!seedingStatus.NeedsSeeding)
                     {
@@ -121,6 +125,11 @@ namespace eShopDashboard
 
                         return;
                     }
+
+                    Log.Information("----- Seeding database");
+
+                    var sw = new Stopwatch();
+                    sw.Start();
 
                     void ProgressAggregator()
                     {
@@ -153,9 +162,9 @@ namespace eShopDashboard
                     seedingStatus.SetAsComplete();
                     _seedingProgress = seedingStatus.PercentComplete;
 
+                    Log.Information("----- Database Seeded ({ElapsedTime:n3}s)", sw.Elapsed.TotalSeconds);
                 }
 
-                Log.Information("----- Database Seeded");
             }
             catch (Exception ex)
             {

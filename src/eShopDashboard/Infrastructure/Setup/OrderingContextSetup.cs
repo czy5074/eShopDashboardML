@@ -1,32 +1,41 @@
-﻿using System;
+﻿using eShopDashboard.EntityModels.Ordering;
 using eShopDashboard.Infrastructure.Data.Ordering;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using SqlBatchInsert;
+using System;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using TinyCsvParser;
 
 namespace eShopDashboard.Infrastructure.Setup
 {
     public class OrderingContextSetup
     {
+        private readonly string _connectionString;
         private readonly OrderingContext _dbContext;
         private readonly ILogger<OrderingContextSetup> _logger;
         private readonly string _setupPath;
-
-        private string[] _orderLines;
-        private string[] _orderItemLines;
+        private Order[] _orderDataArray;
+        private OrderItem[] _orderItemDataArray;
         private SeedingStatus _status;
 
         public OrderingContextSetup(
             OrderingContext dbContext,
             IHostingEnvironment env,
-            ILogger<OrderingContextSetup> logger)
+            ILogger<OrderingContextSetup> logger,
+            IConfiguration configuration)
         {
             _dbContext = dbContext;
             _logger = logger;
-            _setupPath = Path.Combine(env.ContentRootPath, "Infrastructure", "Setup");
+            _setupPath = Path.Combine(env.ContentRootPath, "Infrastructure", "Setup", "DataFiles");
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
         public async Task<SeedingStatus> GetSeedingStatusAsync()
@@ -35,7 +44,7 @@ namespace eShopDashboard.Infrastructure.Setup
 
             if (await _dbContext.Orders.AnyAsync()) return _status = new SeedingStatus(false);
 
-            int dataLinesCount = await GetDataToLoad();
+            int dataLinesCount = GetOrdersDataToLoad() + GetOrderItemsDataToLoad();
 
             return _status = new SeedingStatus(dataLinesCount);
         }
@@ -67,12 +76,44 @@ namespace eShopDashboard.Infrastructure.Setup
             await SeedOrderItemsAsync(orderItemsProgressHandler);
         }
 
-        private async Task<int> GetDataToLoad()
+        private int GetOrderItemsDataToLoad()
         {
-            _orderLines = await File.ReadAllLinesAsync(Path.Combine(_setupPath, "Orders.sql"));
-            _orderItemLines = await File.ReadAllLinesAsync(Path.Combine(_setupPath, "OrderItems.sql"));
+            CsvParser<OrderItem> parser = CsvOrderItemParserFactory.CreateParser();
+            var dataFile = Path.Combine(_setupPath, "OrderItems.csv");
 
-            return _orderLines.Length + _orderItemLines.Length;
+            var loadResult = parser.ReadFromFile(dataFile, Encoding.UTF8).ToList();
+
+            if (loadResult.Any(r => !r.IsValid))
+            {
+                _logger.LogError("----- DATA PARSING ERRORS: {DataFile}\n{Details}", dataFile,
+                    string.Join("\n", loadResult.Where(r => !r.IsValid).Select(r => r.Error)));
+
+                throw new InvalidOperationException($"Data parsing error loading \"{dataFile}\"");
+            }
+
+            _orderItemDataArray = loadResult.Select(r => r.Result).ToArray();
+
+            return _orderItemDataArray.Length;
+        }
+
+        private int GetOrdersDataToLoad()
+        {
+            CsvParser<Order> parser = CsvOrderParserFactory.CreateParser();
+            var dataFile = Path.Combine(_setupPath, "Orders.csv");
+
+            var loadResult = parser.ReadFromFile(dataFile, Encoding.UTF8).ToList();
+
+            if (loadResult.Any(r => !r.IsValid))
+            {
+                _logger.LogError("----- DATA PARSING ERRORS: {DataFile}\n{Details}", dataFile,
+                    string.Join("\n", loadResult.Where(r => !r.IsValid).Select(r => r.Error)));
+
+                throw new InvalidOperationException($"Data parsing error loading \"{dataFile}\"");
+            }
+
+            _orderDataArray = loadResult.Select(r => r.Result).ToArray();
+
+            return _orderDataArray.Length;
         }
 
         private async Task SeedOrderItemsAsync(IProgress<int> recordsProgressHandler)
@@ -82,11 +123,24 @@ namespace eShopDashboard.Infrastructure.Setup
 
             _logger.LogInformation("----- Seeding OrderItems");
 
-            var batcher = new SqlBatcher(_dbContext.Database, _logger);
+            var batcher = new SqlBatcher<OrderItem>(_orderItemDataArray, "Ordering.OrderItems", CsvOrderItemParserFactory.HeaderColumns);
 
-            await batcher.ExecuteInsertCommandsAsync(_orderItemLines, recordsProgressHandler);
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
 
-            _logger.LogInformation($"----- OrderItems Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
+                string sqlInsert;
+
+                while ((sqlInsert = batcher.GetInsertCommand()) != string.Empty)
+                {
+                    var sqlCommand = new SqlCommand(sqlInsert, connection);
+                    await sqlCommand.ExecuteNonQueryAsync();
+
+                    recordsProgressHandler.Report(batcher.RowPointer);
+                }
+            }
+
+            _logger.LogInformation("----- {TotalRows} {TableName} Inserted ({TotalSeconds:n3}s)", batcher.RowPointer, "OrderItems", sw.Elapsed.TotalSeconds);
         }
 
         private async Task SeedOrdersAsync(IProgress<int> recordsProgressHandler)
@@ -96,11 +150,24 @@ namespace eShopDashboard.Infrastructure.Setup
 
             _logger.LogInformation("----- Seeding Orders");
 
-            var batcher = new SqlBatcher(_dbContext.Database, _logger);
+            var batcher = new SqlBatcher<Order>(_orderDataArray, "Ordering.Orders", CsvOrderParserFactory.HeaderColumns);
 
-            await batcher.ExecuteInsertCommandsAsync(_orderLines, recordsProgressHandler);
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
 
-            _logger.LogInformation($"----- Orders Inserted ({sw.Elapsed.TotalSeconds:n3}s)");
+                string sqlInsert;
+
+                while ((sqlInsert = batcher.GetInsertCommand()) != string.Empty)
+                {
+                    var sqlCommand = new SqlCommand(sqlInsert, connection);
+                    await sqlCommand.ExecuteNonQueryAsync();
+
+                    recordsProgressHandler.Report(batcher.RowPointer);
+                }
+            }
+
+            _logger.LogInformation("----- {TotalRows} {TableName} Inserted ({TotalSeconds:n3}s)", batcher.RowPointer, "Orders", sw.Elapsed.TotalSeconds);
         }
     }
 }

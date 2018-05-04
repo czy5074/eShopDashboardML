@@ -4,11 +4,18 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using SqlBatchInsert;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using TinyCsvParser;
 
 namespace eShopDashboard.Infrastructure.Setup
 {
@@ -17,18 +24,21 @@ namespace eShopDashboard.Infrastructure.Setup
         private readonly CatalogContext _dbContext;
         private readonly ILogger<CatalogContextSetup> _logger;
         private readonly string _setupPath;
+        private readonly string _connectionString;
 
-        private string[] _dataLines;
+        private CatalogItem[] _dataArray;
         private SeedingStatus _status;
 
         public CatalogContextSetup(
             CatalogContext dbContext,
             IHostingEnvironment env,
-            ILogger<CatalogContextSetup> logger)
+            ILogger<CatalogContextSetup> logger,
+            IConfiguration configuration)
         {
             _dbContext = dbContext;
             _logger = logger;
-            _setupPath = Path.Combine(env.ContentRootPath, "Infrastructure", "Setup");
+            _setupPath = Path.Combine(env.ContentRootPath, "Infrastructure", "Setup", "DataFiles");
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
         public async Task<SeedingStatus> GetSeedingStatusAsync()
@@ -37,7 +47,7 @@ namespace eShopDashboard.Infrastructure.Setup
 
             if (await _dbContext.CatalogItems.AnyAsync()) return _status = new SeedingStatus(false);
 
-            int dataLinesCount = await GetDataToLoad();
+            int dataLinesCount = GetDataToLoad();
 
             return _status = new SeedingStatus(dataLinesCount);
         }
@@ -53,17 +63,28 @@ namespace eShopDashboard.Infrastructure.Setup
             await SeedCatalogItemsAsync(catalogProgressHandler);
         }
 
-        private async Task<int> GetDataToLoad()
+        private int GetDataToLoad()
         {
-            var dataFile = Path.Combine(_setupPath, "CatalogItems.sql");
+            CsvParser<CatalogItem> parser = CsvCatalogItemParserFactory.CreateParser();
+            var dataFile = Path.Combine(_setupPath, "CatalogItems.csv");
 
-            _dataLines = await File.ReadAllLinesAsync(dataFile);
+            var loadResult = parser.ReadFromFile(dataFile, Encoding.UTF8).ToList();
+
+            if (loadResult.Any(r => !r.IsValid))
+            {
+                _logger.LogError("----- DATA PARSING ERRORS: {DataFile}\n{Details}", dataFile, 
+                    string.Join("\n", loadResult.Where(r => !r.IsValid).Select(r => r.Error)));
+
+                throw new InvalidOperationException($"Data parsing error loading \"{dataFile}\"");
+            }
+
+            _dataArray = loadResult.Select(r => r.Result).ToArray();
 
             //---------------------------------------------
             // Times 2 to account for item tags processing
             //---------------------------------------------
 
-            return _dataLines.Length * 2;
+            return _dataArray.Length; // * 2 ; // Include times 2 if processing catalog tags
         }
 
         private async Task SeedCatalogItemsAsync(IProgress<int> recordsProgressHandler)
@@ -93,14 +114,32 @@ namespace eShopDashboard.Infrastructure.Setup
 
             _logger.LogInformation("----- Seeding CatalogItems");
 
-            var batcher = new SqlBatcher(_dbContext.Database, _logger);
+            var batcher = new SqlBatcher<CatalogItem>(_dataArray, "Catalog.CatalogItems", CsvCatalogItemParserFactory.HeaderColumns);
 
-            await batcher.ExecuteInsertCommandsAsync(_dataLines, itemsProgressHandler);
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
 
-            _logger.LogInformation("----- CatalogItems Inserted ({TotalSeconds:n3}s)", sw.Elapsed.TotalSeconds);
+                string sqlInsert;
+
+                while ((sqlInsert = batcher.GetInsertCommand()) != string.Empty)
+                {
+                    var sqlCommand = new SqlCommand(sqlInsert, connection);
+                    await sqlCommand.ExecuteNonQueryAsync();
+
+                    recordsProgressHandler.Report(batcher.RowPointer);
+                }
+            }
+
+            _logger.LogInformation("----- {TotalRows} {TableName} Inserted ({TotalSeconds:n3}s)", batcher.RowPointer, "CatalogItems", sw.Elapsed.TotalSeconds);
 
 
-            await SeedCatalogTagsAsync(tagsProgressHandler);
+            //----------------------------------------------------------------------
+            // Not needed now because CatalogItems.csv already includes CatalogTags
+            // Could be needed later on in case the items or tags get updated
+            //----------------------------------------------------------------------
+
+            //await SeedCatalogTagsAsync(tagsProgressHandler);
         }
 
         private async Task SeedCatalogTagsAsync(IProgress<int> recordsProgressHandler)
@@ -109,7 +148,7 @@ namespace eShopDashboard.Infrastructure.Setup
             sw.Start();
 
             _logger.LogInformation("----- Adding CatalogTags");
-            var tagsText = await File.ReadAllTextAsync(Path.Combine(_setupPath, "CatalogTags.json"));
+            var tagsText = await File.ReadAllTextAsync(Path.Combine(_setupPath, "CatalogTags.txt"));
 
             var tags = JsonConvert.DeserializeObject<List<CatalogFullTag>>(tagsText);
 
@@ -132,7 +171,7 @@ namespace eShopDashboard.Infrastructure.Setup
 
             await _dbContext.SaveChangesAsync();
 
-            _logger.LogInformation($"----- {i} CatalogTags added ({sw.Elapsed.TotalSeconds:n3}s)");
+            _logger.LogInformation("----- {TotalRows} CatalogTags Added ({TotalSeconds:n3}s)", i, sw.Elapsed.TotalSeconds);
         }
     }
 }
