@@ -76,7 +76,6 @@ namespace eShopDashboard.Forecast
         /// </summary>
         private async Task<PredictionModel<CountryData, CountrySalesPrediction>> CreatePredictionEngineAsync(string modelPath)
         {
-            var env = new TlcEnvironment(conc: 1);
             PredictionModel<CountryData, CountrySalesPrediction> model = await PredictionModel.ReadAsync<CountryData, CountrySalesPrediction>(modelPath);
             return model;
         }
