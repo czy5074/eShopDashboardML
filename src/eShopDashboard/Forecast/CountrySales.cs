@@ -36,12 +36,12 @@ namespace eShopDashboard.Forecast
 
         public float year;
         public float month;
-        public float sales;
-        public float avg;
-        public float count;
         public float max;
         public float min;
         public float idx;
+        public float count;
+        public float sales;
+        public float avg;
         public float prev;
     }
 
