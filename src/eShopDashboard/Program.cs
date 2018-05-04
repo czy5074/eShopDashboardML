@@ -10,6 +10,7 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,11 +19,6 @@ namespace eShopDashboard
 {
     public class Program
     {
-        private static BackgroundWorker _bw = new BackgroundWorker
-        {
-            WorkerReportsProgress = true
-        };
-
         private static int _seedingProgress = 100;
 
         public static IWebHost BuildWebHost(string[] args) =>
@@ -57,15 +53,15 @@ namespace eShopDashboard
             {
                 var host = BuildWebHost(args);
 
-                await ConfigureDatabaseAsync(host);
-
                 Log.Information("----- Seeding Database");
 
-                Task seeding = Task.Run(async () => { await SeedDatabaseAsync(host); });
+                Task seeding = Task.Run(async () => { await ConfigureDatabaseAsync(host); });
 
                 Log.Information("----- Running Host");
 
                 host.Run();
+
+                Log.Information("----- Web host stopped");
 
                 return 0;
             }
@@ -83,6 +79,8 @@ namespace eShopDashboard
 
         private static async Task ConfigureDatabaseAsync(IWebHost host)
         {
+            _seedingProgress = 0;
+
             using (var scope = host.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -93,11 +91,14 @@ namespace eShopDashboard
                 var orderingContext = services.GetService<OrderingContext>();
                 await orderingContext.Database.MigrateAsync();
             }
+
+            await SeedDatabaseAsync(host);
+
+            _seedingProgress = 100;
         }
 
         private static async Task SeedDatabaseAsync(IWebHost host)
         {
-
             try
             {
                 using (var scope = host.Services.CreateScope())
@@ -110,9 +111,13 @@ namespace eShopDashboard
                     var orderingContextSetup = services.GetService<OrderingContextSetup>();
 
                     var catalogSeedingStatus = await catalogContextSetup.GetSeedingStatusAsync();
+                    Log.Information("----- SeedingStatus ({Context}): {@SeedingStatus}", "Catalog", catalogSeedingStatus);
+
                     var orderingSeedingStatus = await orderingContextSetup.GetSeedingStatusAsync();
+                    Log.Information("----- SeedingStatus ({Context}): {@SeedingStatus}", "Ordering", orderingSeedingStatus);
 
                     var seedingStatus = new SeedingStatus(catalogSeedingStatus, orderingSeedingStatus);
+                    Log.Information("----- SeedingStatus ({Context}): {@SeedingStatus}", "Aggregated", seedingStatus);
 
                     if (!seedingStatus.NeedsSeeding)
                     {
@@ -120,6 +125,11 @@ namespace eShopDashboard
 
                         return;
                     }
+
+                    Log.Information("----- Seeding database");
+
+                    var sw = new Stopwatch();
+                    sw.Start();
 
                     void ProgressAggregator()
                     {
@@ -142,17 +152,19 @@ namespace eShopDashboard
                     });
 
                     Log.Information("----- Seeding CatalogContext");
-                    await catalogContextSetup.SeedAsync(catalogProgressHandler);
+                    Task catalogSeedingTask = Task.Run(async () => await catalogContextSetup.SeedAsync(catalogProgressHandler));
 
                     Log.Information("----- Seeding OrderingContext");
-                    await orderingContextSetup.SeedAsync(orderingProgressHandler);
+                    Task orderingSeedingTask = Task.Run(async () => await orderingContextSetup.SeedAsync(orderingProgressHandler));
+
+                    await Task.WhenAll(catalogSeedingTask, orderingSeedingTask);
 
                     seedingStatus.SetAsComplete();
                     _seedingProgress = seedingStatus.PercentComplete;
 
+                    Log.Information("----- Database Seeded ({ElapsedTime:n3}s)", sw.Elapsed.TotalSeconds);
                 }
 
-                Log.Information("----- Database Seeded");
             }
             catch (Exception ex)
             {
