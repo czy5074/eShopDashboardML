@@ -1,5 +1,4 @@
-﻿using eShopDashboard.Extensions;
-using eShopDashboard.Infrastructure.Data.Catalog;
+﻿using eShopDashboard.Infrastructure.Data.Catalog;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;

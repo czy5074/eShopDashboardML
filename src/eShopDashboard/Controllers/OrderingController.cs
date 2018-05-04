@@ -1,4 +1,4 @@
-﻿using eShopDashboard.Extensions;
+﻿using eShopDashboard.Infrastructure.Extensions;
 using eShopDashboard.Queries;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;

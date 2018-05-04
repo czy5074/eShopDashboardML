@@ -6,7 +6,7 @@ using Microsoft.ML.Runtime.Api;
 using Microsoft.ML.Runtime.Data;
 using System.Threading.Tasks;
 
-namespace eShopDashboard.Forecasting
+namespace eShopDashboard.Forecast
 {
     /// <summary>
     /// This is the input to the trained model.

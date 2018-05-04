@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace eShopDashboard.Forecasting
+namespace eShopDashboard.Forecast
 {
     public interface ICountrySales
     {
