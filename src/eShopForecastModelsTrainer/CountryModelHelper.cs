@@ -11,74 +11,42 @@ namespace eShopForecastModelsTrainer
 {
     public class CountryModelHelper
     {
-        private static TlcEnvironment tlcEnvironment = new TlcEnvironment(seed: 1);
-        private static IPredictorModel model;
-
         /// <summary>
         /// Train and save model for predicting next month country unit sales
         /// </summary>
         /// <param name="dataPath">Input training file path</param>
         /// <param name="outputModelPath">Trained model path</param>
-        public static void SaveModel(string dataPath, string outputModelPath = "country_month_fastTreeTweedie.zip")
+        public static async Task SaveModel(string dataPath, string outputModelPath = "country_month_fastTreeTweedie.zip")
         {
             if (File.Exists(outputModelPath))
             {
                 File.Delete(outputModelPath);
             }
 
-            using (var saveStream = File.OpenWrite(outputModelPath))
-            {
-                SaveCountryModel(dataPath, saveStream);
-            }
+            var model = CreateCountryModelUsingPipeline(dataPath);
+
+            await model.WriteAsync(outputModelPath);
         }
 
         /// <summary>
-        /// Train and save model for predicting next month country unit sales
-        /// </summary>
-        /// <param name="dataPath">Input training file path</param>
-        /// <param name="stream">Trained model path</param>
-        public static void SaveCountryModel(string dataPath, Stream stream)
-        {
-            if (model == null)
-            {
-                model = CreateCountryModelUsingExperiment(dataPath);
-            }
-
-            model.Save(tlcEnvironment, stream);
-        }
-
-        /// <summary>
-        /// Build model for predicting next month country unit sales using Experiment API
+        /// Build model for predicting next month country unit sales using Learning Pipelines API
         /// </summary>
         /// <param name="dataPath">Input training file path</param>
         /// <returns></returns>
-        private static IPredictorModel CreateCountryModelUsingExperiment(string dataPath)
+        private static PredictionModel<CountryData, CountrySalesPrediction> CreateCountryModelUsingPipeline(string dataPath)
         {
-            Console.WriteLine("**********************************");
-            Console.WriteLine("Training country forecasting model");
+            Console.WriteLine("*************************************************");
+            Console.WriteLine("Training country forecasting model using Pipeline");
 
-
-            // TlcEnvironment holds the experiment's session
-            TlcEnvironment tlcEnvironment = new TlcEnvironment(seed: 1);
-            Experiment experiment = tlcEnvironment.CreateExperiment();
+            var learningPipeline = new LearningPipeline();
 
             // First node in the workflow will be reading the source csv file, following the schema defined by dataSchema
+            learningPipeline.Add(new TextLoader<CountryData>(dataPath, header: true, sep: ","));
 
-            // This schema specifies the column name, type (TX for text or R4 for float) and column order
-            // of the input training file
-            // next,country,year,month,max,min,idx,count,sales,avg,prev
-            var dataSchema = "col=Label:R4:0 col=country:TX:1 col=year:R4:2 col=month:R4:3 " +
-                             "col=max:R4:4 col=min:R4:5 col=idx:R4:6 col=count:R4:7 " +
-                             "col=sales:R4:8 col=avg:R4:9 col=prev:R4:10 " +
-                             "header+ sep=,";
-
-            var importData = new ML.Data.TextLoader { CustomSchema = dataSchema };
-            var imported = experiment.Add(importData);
-
-            // The experiment combines columns by data types
-            // First group will be made by numerical features in a vector named NumericalFeatures
-            var numericalConcatenate = new ML.Transforms.ColumnConcatenator{ Data = imported.Data };
-            numericalConcatenate.AddColumn("NumericalFeatures",
+            // The model needs the columns to be arranged into a single column of numeric type
+            // First, we group all numeric columns into a single array named NumericalFeatures
+            learningPipeline.Add(new ML.Transforms.ColumnConcatenator(
+                outputColumn: "NumericalFeatures",
                 nameof(CountryData.year),
                 nameof(CountryData.month),
                 nameof(CountryData.max),
@@ -87,51 +55,28 @@ namespace eShopForecastModelsTrainer
                 nameof(CountryData.count),
                 nameof(CountryData.sales),
                 nameof(CountryData.avg),
-                nameof(CountryData.prev));
-            var numericalConcatenated = experiment.Add(numericalConcatenate);
+                nameof(CountryData.prev)
+            ));
 
-            // The second group is for categorical features, in a vecor named CategoryFeatures
-            var categoryConcatenate = new ML.Transforms.ColumnConcatenator { Data = numericalConcatenated.OutputData };
-            categoryConcatenate.AddColumn("CategoryFeatures", nameof(CountryData.country));
-            var categoryConcatenated = experiment.Add(categoryConcatenate);
+            // Second group is for categorical features (just one in this case), we name this column CategoryFeatures
+            learningPipeline.Add(new ML.Transforms.ColumnConcatenator(outputColumn: "CategoryFeatures", nameof(CountryData.country)));
 
+            // Then we need to transform the category column using one-hot encoding. This will return a numeric array
+            learningPipeline.Add(new ML.Transforms.CategoricalOneHotVectorizer("CategoryFeatures"));
 
-            var categorize = new ML.Transforms.CategoricalOneHotVectorizer { Data = categoryConcatenated.OutputData };
-            categorize.AddColumn("CategoryFeatures");
-            var categorized = experiment.Add(categorize);
+            // Once all columns are numeric types, all columns will be combined
+            // into a single column, named Features 
+            learningPipeline.Add(new ML.Transforms.ColumnConcatenator(outputColumn: "Features", "NumericalFeatures", "CategoryFeatures"));
 
-            // After combining columns by data type, the experiment needs all columns 
-            // to be aggregated in a single column, named Features 
-            var featuresConcatenate = new ML.Transforms.ColumnConcatenator { Data = categorized.OutputData };
-            featuresConcatenate.AddColumn("Features", "NumericalFeatures", "CategoryFeatures");
-            var featuresConcatenated = experiment.Add(featuresConcatenate);
-
-            // Add the Learner to the workflow. The Learner is the machine learning algorithm used to train a model
-            // In this case, we use the TweedieFastTree.TrainRegression
-            var learner = new ML.Trainers.FastTreeTweedieRegressor { TrainingData = featuresConcatenated.OutputData, NumThreads = 1 };
-            var learnerOutput = experiment.Add(learner);
-
-            // Add the Learner to the workflow. The Learner is the machine learning algorithm used to train a model
+            // Add the Learner to the pipeline. The Learner is the machine learning algorithm used to train a model
             // In this case, TweedieFastTree.TrainRegression was one of the best performing algorithms, but you can 
             // choose any other regression algorithm (StochasticDualCoordinateAscentRegressor,PoissonRegressor,...)
-            var combineModels = new ML.Transforms.ManyHeterogeneousModelCombiner
-            {
-                // Transformation nodes built before
-                TransformModels = new ArrayVar<ITransformModel>(numericalConcatenated.Model, categoryConcatenated.Model, categorized.Model, featuresConcatenated.Model),
-                // Learner
-                PredictorModel = learnerOutput.PredictorModel
-            };
+            learningPipeline.Add(new ML.Trainers.FastTreeTweedieRegressor { NumThreads = 1, FeatureColumn = "Features" });
 
-            // Finally, add the combined model to the experiment
-            var combinedModels = experiment.Add(combineModels);
+            // Finally, we train the pipeline using the training dataset set at the first stage
+            var model = learningPipeline.Train<CountryData, CountrySalesPrediction>();
 
-            // Compile, set parameters (input files,...) and executes the experiment
-            experiment.Compile();
-            experiment.SetInput(importData.InputFile, new SimpleFileHandle(tlcEnvironment, dataPath, false, false));
-            experiment.Run();
-
-            // IPredictorModel is extracted from the workflow
-            return experiment.GetOutput(combinedModels.PredictorModel);
+            return model;
         }
 
         /// <summary>
@@ -139,7 +84,7 @@ namespace eShopForecastModelsTrainer
         /// </summary>
         /// <param name="outputModelPath">Model file path</param>
         /// <returns></returns>
-        public static async Task PredictSamples(string outputModelPath = "country_month_fastTreeTweedie.zip")
+        public static async Task TestPrediction(string outputModelPath = "country_month_fastTreeTweedie.zip")
         {
             Console.WriteLine("*********************************");
             Console.WriteLine("Testing country forecasting model");

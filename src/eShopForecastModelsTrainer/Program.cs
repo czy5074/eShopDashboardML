@@ -9,10 +9,10 @@ namespace eShopForecastModelsTrainer
         {
             try
             {
-                CountryModelHelper.SaveModel("data/countries.stats.csv");
-                ProductModelHelper.SaveModel("data/products.stats.csv");
-                await CountryModelHelper.PredictSamples();
-                await ProductModelHelper.PredictSamples();
+                await CountryModelHelper.SaveModel("data/countries.stats.csv");
+                await CountryModelHelper.TestPrediction();
+                await ProductModelHelper.SaveModel("data/products.stats.csv");
+                await ProductModelHelper.TestPrediction();
             } catch(Exception ex)
             {
                 Console.Write(ex.Message);
