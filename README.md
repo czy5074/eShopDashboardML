@@ -1,4 +1,4 @@
-# eShopDashboardAI
+# eShopDashboard
 eShopDashboard is a simple ASP.NET Core app with Product Sales Forecast predictions using Machine Learning.NET.
 
 This sample app is a monolithic ASP.NET Core Razor app and it's main focus is to highlight the usage of Machine Learning .NET API by showing how to train, create and evaluate/predict models related to Product Sales Forecast prediction.
