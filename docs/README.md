@@ -8,7 +8,7 @@ If you want to use a real SQL Server or Azure SQL Database, you just need to cha
 
 Here's a sample screenshot of one of the forecast predictions:
 
-![image](./images/eShopDashboardAI.png)
+![image](./images/eShopDashboard.png)
 
 ## Project Docs
 For further info about how to get started, check the additional info at .MD files : 
