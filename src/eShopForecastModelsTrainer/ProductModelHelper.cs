@@ -16,7 +16,7 @@ namespace eShopForecastModelsTrainer
         /// </summary>
         /// <param name="dataPath">Input training file path</param>
         /// <param name="outputModelPath">Trained model path</param>
-        public static async Task SaveModel(string dataPath, string outputModelPath = "country_month_fastTreeTweedie.zip")
+        public static async Task SaveModel(string dataPath, string outputModelPath = "product_month_fastTreeTweedie.zip")
         {
             if (File.Exists(outputModelPath))
             {
