@@ -4,7 +4,7 @@ namespace eShopForecastModelsTrainer
 {
     public class ProductData
     {
-        // next,productId,year,month,units,avg,count,max,min,idx,prev
+        // next,productId,year,month,units,avg,count,max,min,prev
         [ColumnName("Label")]
         public float next;
 
@@ -17,7 +17,6 @@ namespace eShopForecastModelsTrainer
         public float count;
         public float max;
         public float min;
-        public float idx;
         public float prev;
     }
 
