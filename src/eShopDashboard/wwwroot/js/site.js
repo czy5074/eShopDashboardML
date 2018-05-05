@@ -87,8 +87,8 @@ function getProductData(product) {
 }
 
 function getForecast(st, pr) {
-    // next,productId,year,month,units,avg,count,max,min,idx,prev
-    var surl = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&count=${st.count}&prev=${st.prev}&sales=${st.sales}&idx=${st.idx}`;
+    // next,productId,year,month,units,avg,count,max,min,prev
+    var surl = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&count=${st.count}&prev=${st.prev}&units=${st.units}`;
     return $.getJSON(`${apiUri.forecasting}/product/${st.productId}/unitdemandestimation${surl}`);
 }
 
@@ -137,7 +137,7 @@ function plotLineChart(fore1, fore2, history, description, price) {
             tickformat: '$,.0'
         },
         hovermode: "closest",
-        dragmode: 'pan',
+        //dragmode: 'pan',
         legend: {
             orientation: "h",
             xanchor: "center",
@@ -274,13 +274,13 @@ function getCountryData(country) {
 }
 
 function getCountryForecast(st) {
-    // next,country,year,month,max,min,idx,count,units,avg,prev
-    var url = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&prev=${st.prev}&count=${st.count}&avg=${st.avg}&sales=${st.sales}&idx=${st.idx}`;
+    // next,country,year,month,max,min,std,count,sales,med,prev
+    var url = `?month=${st.month}&year=${st.year}&avg=${st.avg}&max=${st.max}&min=${st.min}&prev=${st.prev}&count=${st.count}&med=${st.med}&sales=${st.sales}&std=${st.std}`;
     return $.getJSON(`${apiUri.forecasting}/country/${st.country}/unitdemandestimation${url}`);
 }
 
 function plotLineChartCountry(fore1, fore2, historyItems, country) {
-    fore2 = Math.round(fore2);
+    fore2 = Math.pow(10,fore2);
 
     $("footer").removeClass("sticky");
     updateCountryStatistics(country, historyItems.slice(historyItems.length - 12), fore2);
@@ -312,7 +312,7 @@ function plotLineChartCountry(fore1, fore2, historyItems, country) {
             zeroline: false,
             tickformat: '$,.0'
         },
-        dragmode: 'pan',
+        //dragmode: 'pan',
         hovermode: "closest",
         legend: {
             orientation: "h",

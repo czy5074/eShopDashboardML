@@ -32,9 +32,7 @@ namespace eShopDashboard
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddSingleton<IOrderingQueries>((sp) =>
-                new OrderingQueries(Configuration.GetConnectionString("DefaultConnection")));
-
+            services.AddScoped<IOrderingQueries, OrderingQueries>();
             services.AddScoped<ICatalogQueries, CatalogQueries>();
             services.AddScoped<CatalogContextSetup>();
             services.AddScoped<OrderingContextSetup>();
@@ -54,7 +52,7 @@ namespace eShopDashboard
                 {
                     Title = "eShopDashboard - API",
                     Version = "v1",
-                    Description = "The Dashboard Microservice HTTP API.",
+                    Description = "Web Dashboard REST HTTP API.",
                     TermsOfService = "Terms Of Service"
                 });
             });

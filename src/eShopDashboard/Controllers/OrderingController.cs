@@ -1,6 +1,7 @@
 ﻿using eShopDashboard.Infrastructure.Extensions;
 using eShopDashboard.Queries;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,7 +36,7 @@ namespace eShopDashboard.Controllers
             IEnumerable<dynamic> items = await _queries.GetCountryStatsAsync();
 
             var typedOrderItems = items
-                .Select(c => new { c.next, c.country, c.year, c.month, c.max, c.min, c.idx, c.count, c.sales, c.avg, c.prev})
+                .Select(c => new { c.next, c.country, c.year, c.month, c.max, c.min, c.std, c.count, c.sales, c.med, c.prev})
                 .ToList();
 
             var csvFile = File(Encoding.UTF8.GetBytes(typedOrderItems.FormatAsCSV()), "text/csv");
@@ -69,7 +70,7 @@ namespace eShopDashboard.Controllers
             IEnumerable<dynamic> items = await _queries.GetProductStatsAsync();
 
             var typedOrderItems = items
-                .Select(c => new { c.next, c.productId, c.year, c.month, c.units, c.avg, c.count, c.max, c.min, c.idx, c.prev })
+                .Select(c => new { c.next, c.productId, c.year, c.month, c.units, c.avg, c.count, c.max, c.min, c.prev })
                 .ToList();
 
             var csvFile = File(Encoding.UTF8.GetBytes(typedOrderItems.FormatAsCSV()), "text/csv");

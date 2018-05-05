@@ -13,8 +13,9 @@ namespace eShopDashboard.Forecast
     /// </summary>
     public class ProductData
     {
+        // next,productId,year,month,units,avg,count,max,min,prev
         public ProductData(string productId, int year, int month, float units, float avg, 
-            int count, float max, float min, float prev, float idx)
+            int count, float max, float min, float prev)
         {
             this.productId = productId;
             this.year = year;
@@ -25,7 +26,6 @@ namespace eShopDashboard.Forecast
             this.max = max;
             this.min = min;
             this.prev = prev;
-            this.idx= idx;
         }
 
         [ColumnName("Label")]
@@ -40,7 +40,6 @@ namespace eShopDashboard.Forecast
         public float count;
         public float max;
         public float min;
-        public float idx;
         public float prev;
     }
 
@@ -58,14 +57,13 @@ namespace eShopDashboard.Forecast
         /// <summary>
         /// This method demonstrates how to run prediction on one example at a time.
         /// </summary>
-        public async Task<ProductUnitPrediction> Predict(string modelPath, string productId, int year, int month, float units, float avg, 
-            int count, float max, float min, float prev, float idx)
+        public async Task<ProductUnitPrediction> Predict(string modelPath, string productId, int year, int month, float units, float avg, int count, float max, float min, float prev)
         {
             // Load model
             var predictionEngine = await CreatePredictionEngineAsync(modelPath);
 
             // Build country sample
-            var inputExample = new ProductData(productId, year, month, units, avg, count, max, min, prev, idx);
+            var inputExample = new ProductData(productId, year, month, units, avg, count, max, min, prev);
 
             // Returns prediction
             return predictionEngine.Predict(inputExample);
