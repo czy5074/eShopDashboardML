@@ -14,5 +14,7 @@ namespace eShopDashboard.Queries
         Task<IEnumerable<dynamic>> GetCountryStatsAsync();
 
         Task<IEnumerable<dynamic>> GetProductStatsAsync();
+
+        Task<dynamic[]> GetProductsHistoryDepthAsync(IEnumerable<int> products);
     }
 }

@@ -37,7 +37,7 @@ namespace eShopDashboard
             return _seedingProgress;
         }
 
-        public static async Task<int> Main(string[] args)
+        public static int Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()

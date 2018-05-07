@@ -8,8 +8,12 @@ If you want to use a real SQL Server or Azure SQL Database, you just need to cha
 
 Here's a sample screenshot of one of the forecast predictions:
 
-![image](https://user-images.githubusercontent.com/1712635/39485798-c5760630-4d2e-11e8-851d-cd75780e4b4a.png)
+![image](./docs/images/eShopDashboard.png)
 
-For further info about how to get started, check the additional info at the Wiki or .MD files for this sample app. 
+For further info about how to get started, check the additional info at the [docs](./docs/README.md) folder.
+
+## Citation
+eShopDashboardML dataset is based on Online Retail Data Set from http://archive.ics.uci.edu/ml/datasets/online+retail
+> Daqing Chen, Sai Liang Sain, and Kun Guo, Data mining for the online retail industry: A case study of RFM model-based customer segmentation using data mining, Journal of Database Marketing and Customer Strategy Management, Vol. 19, No. 3, pp. 197â€“208, 2012 (Published online before print: 27 August 2012. doi: 10.1057/dbm.2012.17).
 
 

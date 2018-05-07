@@ -16,7 +16,7 @@ namespace eShopForecastModelsTrainer
         /// </summary>
         /// <param name="dataPath">Input training file path</param>
         /// <param name="outputModelPath">Trained model path</param>
-        public static async Task SaveModel(string dataPath, string outputModelPath = "country_month_fastTreeTweedie.zip")
+        public static async Task SaveModel(string dataPath, string outputModelPath = "product_month_fastTreeTweedie.zip")
         {
             if (File.Exists(outputModelPath))
             {
@@ -52,7 +52,6 @@ namespace eShopForecastModelsTrainer
                 nameof(ProductData.month),
                 nameof(ProductData.max),
                 nameof(ProductData.min),
-                nameof(ProductData.idx),
                 nameof(ProductData.count),
                 nameof(ProductData.units),
                 nameof(ProductData.avg),
@@ -96,18 +95,18 @@ namespace eShopForecastModelsTrainer
             // Build sample data
             ProductData dataSample = new ProductData()
             {
-                productId = "1527", month = 9, year = 2017, avg = 20, max = 41, min = 7,
-                count = 30, prev = 559, units = 628, idx = 33 
+                productId = "263", month = 10, year = 2017, avg = 91, max = 370, min = 1,
+                count = 10, prev = 1675, units = 910
             };
 
             // Predict sample data
             ProductUnitPrediction prediction = model.Predict(dataSample);
-            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real value (units): 778, Forecasting (units): {prediction.Score}");
+            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real value (units): 551, Forecasting (units): {prediction.Score}");
 
             dataSample = new ProductData()
             {
-                productId = "1527", month = 10, year = 2017, avg = 25, max = 41, min = 11,
-                count = 31, prev = 628, units = 778, idx = 34
+                productId = "263", month = 11, year = 2017, avg = 29, max = 221, min = 1,
+                count = 35, prev = 910, units = 551
             };
 
             prediction = model.Predict(dataSample);
@@ -115,17 +114,17 @@ namespace eShopForecastModelsTrainer
 
             dataSample = new ProductData()
             {
-                productId = "1511", month = 9, year = 2017, avg = 2, max = 3, min = 1,
-                count = 6, prev = 15, units = 13, idx = 33
+                productId = "988", month = 10, year = 2017, avg = 43, max = 220, min = 1,
+                count = 25, prev = 1036, units = 1094
             };
 
             prediction = model.Predict(dataSample);
-            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real Value (units): 12, Forecasting (units): {prediction.Score}");
+            Console.WriteLine($"Product: {dataSample.productId}, month: {dataSample.month+1}, year: {dataSample.year} - Real Value (units): 1076, Forecasting (units): {prediction.Score}");
 
             dataSample = new ProductData()
             {
-                productId = "1511", month = 10, year = 2017, avg = 2, max = 5, min = 1,
-                count = 6, prev = 13, units = 12, idx = 34
+                productId = "988", month = 11, year = 2017, avg = 41, max = 225, min = 4,
+                count = 26, prev = 1094, units = 1076
             };
 
             prediction = model.Predict(dataSample);

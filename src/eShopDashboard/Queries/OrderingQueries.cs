@@ -1,4 +1,6 @@
 ﻿using Dapper;
+using eShopDashboard.Infrastructure.Data.Ordering;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -9,10 +11,12 @@ namespace eShopDashboard.Queries
     public class OrderingQueries : IOrderingQueries
     {
         private readonly string _connectionString;
+        private readonly OrderingContext _orderingContext;
 
-        public OrderingQueries(string connectionString)
+        public OrderingQueries(OrderingContext orderingContext)
         {
-            _connectionString = connectionString;
+            _orderingContext = orderingContext;
+            _connectionString = _orderingContext.Database.GetDbConnection().ConnectionString;
         }
 
         public async Task<IEnumerable<dynamic>> GetCountryHistoryAsync(string country)
@@ -54,6 +58,17 @@ namespace eShopDashboard.Queries
             var productStats = await GetProductHistoryAsync(null);
 
             return productStats.Where(p => p.next != null && p.prev != null);
+        }
+
+        public Task<dynamic[]> GetProductsHistoryDepthAsync(IEnumerable<int> products)
+        {
+            return _orderingContext.OrderItems
+                .Where(c => products.Contains(c.ProductId))
+                .Select(c => new { c.ProductId, c.Order.OrderDate.Month, c.Order.OrderDate.Year })
+                .Distinct()
+                .GroupBy(k => k.ProductId, g => new { g.Year, g.Month }, (k, g) => new { ProductId = k, count = g.Count() })
+                .Cast<dynamic>()
+                .ToArrayAsync();
         }
     }
 }
