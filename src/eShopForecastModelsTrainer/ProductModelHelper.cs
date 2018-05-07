@@ -42,7 +42,7 @@ namespace eShopForecastModelsTrainer
             var learningPipeline = new LearningPipeline();
 
             // First stage in the pipeline will be reading the source csv file
-            learningPipeline.Add(new TextLoader<ProductData>(dataPath, header: true, sep: ","));
+            learningPipeline.Add(new TextLoader<ProductData>(dataPath, useHeader: true, separator: ","));
 
             // The model needs the columns to be arranged into a single column of numeric type
             // First, we group all numeric columns into a single array named NumericalFeatures
