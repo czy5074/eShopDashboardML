@@ -41,7 +41,7 @@ namespace eShopForecastModelsTrainer
             var learningPipeline = new LearningPipeline();
 
             // First node in the workflow will be reading the source csv file, following the schema defined by dataSchema
-            learningPipeline.Add(new TextLoader<CountryData>(dataPath, header: true, sep: ","));
+            learningPipeline.Add(new TextLoader<CountryData>(dataPath, useHeader: true, separator: ","));
 
             // The model needs the columns to be arranged into a single column of numeric type
             // First, we group all numeric columns into a single array named NumericalFeatures
