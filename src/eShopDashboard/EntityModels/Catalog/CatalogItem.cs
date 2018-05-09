@@ -5,9 +5,6 @@ namespace eShopDashboard.EntityModels.Catalog
 {
     public class CatalogItem
     {
-        private CatalogFullTag _tags;
-        private bool _invalidTagJson;
-
         public int Id { get; set; }
 
         public string Name { get; set; }
@@ -22,11 +19,7 @@ namespace eShopDashboard.EntityModels.Catalog
 
         public int CatalogTypeId { get; set; }
 
-        //public CatalogType CatalogType { get; set; }
-
         public int CatalogBrandId { get; set; }
-
-        //public CatalogBrand CatalogBrand { get; set; }
 
         // Quantity in stock
         public int AvailableStock { get; set; }
@@ -45,25 +38,5 @@ namespace eShopDashboard.EntityModels.Catalog
 
 
         public string TagsJson { get; set; }
-
-        public CatalogFullTag Tags
-        {
-            get
-            {
-                if (_tags != null) return _tags;
-                if (_invalidTagJson) return null;
-
-                try
-                {
-                    return TagsJson == null ? null : _tags = JsonConvert.DeserializeObject<CatalogFullTag>(TagsJson);
-                }
-                catch
-                {
-                    _invalidTagJson = true;
-
-                    return null;
-                }
-            }
-        }
     }
 }

@@ -3,10 +3,8 @@ using eShopDashboard.Infrastructure.Data.Catalog;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using SqlBatchInsert;
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
@@ -14,7 +12,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using TinyCsvParser;
 
 namespace eShopDashboard.Infrastructure.Setup
@@ -66,7 +63,7 @@ namespace eShopDashboard.Infrastructure.Setup
         private int GetDataToLoad()
         {
             CsvParser<CatalogItem> parser = CsvCatalogItemParserFactory.CreateParser();
-            var dataFile = Path.Combine(_setupPath, "CatalogItems.csv");
+            var dataFile = Path.Combine(_setupPath, "Catalog.csv");
 
             var loadResult = parser.ReadFromFile(dataFile, Encoding.UTF8).ToList();
 
@@ -132,46 +129,7 @@ namespace eShopDashboard.Infrastructure.Setup
             }
 
             _logger.LogInformation("----- {TotalRows} {TableName} Inserted ({TotalSeconds:n3}s)", batcher.RowPointer, "CatalogItems", sw.Elapsed.TotalSeconds);
-
-
-            //----------------------------------------------------------------------
-            // Not needed now because CatalogItems.csv already includes CatalogTags
-            // Could be needed later on in case the items or tags get updated
-            //----------------------------------------------------------------------
-
-            //await SeedCatalogTagsAsync(tagsProgressHandler);
         }
 
-        private async Task SeedCatalogTagsAsync(IProgress<int> recordsProgressHandler)
-        {
-            var sw = new Stopwatch();
-            sw.Start();
-
-            _logger.LogInformation("----- Adding CatalogTags");
-            var tagsText = await File.ReadAllTextAsync(Path.Combine(_setupPath, "CatalogTags.txt"));
-
-            var tags = JsonConvert.DeserializeObject<List<CatalogFullTag>>(tagsText);
-
-            _logger.LogInformation("----- Adding tags to CatalogItems");
-
-            int i = 0;
-
-            foreach (var tag in tags)
-            {
-                var entity = await _dbContext.CatalogItems.FirstOrDefaultAsync(ci => ci.Id == tag.ProductId);
-
-                if (entity == null) continue;
-
-                entity.TagsJson = JsonConvert.SerializeObject(tag);
-
-                _dbContext.Update(entity);
-
-                recordsProgressHandler.Report(++i);
-            }
-
-            await _dbContext.SaveChangesAsync();
-
-            _logger.LogInformation("----- {TotalRows} CatalogTags Added ({TotalSeconds:n3}s)", i, sw.Elapsed.TotalSeconds);
-        }
     }
 }
