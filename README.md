@@ -10,6 +10,12 @@ Here's a sample screenshot of one of the forecast predictions:
 
 ![image](./docs/images/eShopDashboard.png)
 
+## Walkthroughs and setting it up
+
+Check the Wiki to learn how to set it up in Visual Studio and further explanations on the code:
+
+https://github.com/dotnet-architecture/eShopDashboardML/wiki
+
 For further info about how to get started, check the additional info at the [docs](./docs/README.md) folder.
 
 ## Citation
