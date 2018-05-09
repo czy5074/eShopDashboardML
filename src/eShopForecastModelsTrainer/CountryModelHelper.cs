@@ -98,30 +98,30 @@ namespace eShopForecastModelsTrainer
                 country = "United Kingdom",
                 month = 10,
                 year = 2017,
-                med = 309.945F,
-                max = 587.902F,
-                min = 135.640F,
-                std = 1063.932092F,
-                prev = 856548.78F,
-                count = 1724,
-                sales = 873612.9F,
+                med = 323.4F,
+                max = 616.96F,
+                min = 145.9800F,
+                std = 3041.14133F,
+                prev = 930338.28F,
+                count = 1705,
+                sales = 1075435.72F,
             };
             // Predict sample data
             var prediction = model.Predict(dataSample);
-            Console.WriteLine($"Country: {dataSample.country}, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (US$): {Math.Pow(6.0084501F,10)}, Forecasting (US$): {Math.Pow(prediction.Score,10)}");
+            Console.WriteLine($"Country: {dataSample.country}, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (US$): {Math.Pow(6.207962F, 10)}, Forecasting (US$): {Math.Pow(prediction.Score,10)}");
 
             dataSample = new CountryData()
             {
                 country = "United Kingdom", 
                 month = 11,
                 year = 2017,
-                med = 288.72F,
-                max = 501.488F,
-                min = 134.5360F,
-                std = 707.5642F,
-                prev = 873612.9F,
+                med = 301.04F,
+                max = 515.272F,
+                min = 139.42800F,
+                std = 6580.22797F,
+                prev = 1075435.72F,
                 count = 2387,
-                sales = 1019647.67F,
+                sales = 1614217.83F,
             };
             prediction = model.Predict(dataSample);
             Console.WriteLine($"Country: {dataSample.country}, month: {dataSample.month + 1}, year: {dataSample.year} - Forecasting (US$):  {Math.Pow(prediction.Score,10)}");
@@ -131,29 +131,29 @@ namespace eShopForecastModelsTrainer
                 country = "United States",
                 month = 10,
                 year = 2017,
-                med = 400.17F,
-                max = 573.63F,
-                min = 340.395F,
-                std = 340.3959F,
-                prev = 4264.94F,
-                count = 10,
-                sales = 5322.56F
+                med = 394.35F,
+                max = 560.22F,
+                min = 359.68F,
+                std = 363.38736F,
+                prev = 4694.47F,
+                count = 11,
+                sales = 6189.66F
             };
             prediction = model.Predict(dataSample);
-            Console.WriteLine($"Country: {dataSample.country}, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (US$): {Math.Pow(3.805769F,10)}, Forecasting (US$): {Math.Pow(prediction.Score,10)}");
+            Console.WriteLine($"Country: {dataSample.country}, month: {dataSample.month + 1}, year: {dataSample.year} - Real value (US$): {Math.Pow(3.850846F, 10)}, Forecasting (US$): {Math.Pow(prediction.Score,10)}");
 
             dataSample = new CountryData()
             {
                 country = "United States",
                 month = 11,
                 year = 2017,
-                med = 317.9F,
-                max = 1135.99F,
-                min = 249.44F,
-                std = 409.75528F,
-                prev = 5322.56F,
+                med = 364.4F,
+                max = 1199.85F,
+                min = 277.11F,
+                std = 447.607827F,
+                prev = 6189.66F,
                 count = 11,
-                sales = 6393.96F,
+                sales = 7093.27F,
             };
             prediction = model.Predict(dataSample);
             Console.WriteLine($"Country: {dataSample.country}, month: {dataSample.month + 1}, year: {dataSample.year} - Forecasting (US$):  {Math.Pow(prediction.Score,10)}");
