@@ -6,7 +6,7 @@ Open the solution `eShopDashboard.sln` in the root folder of the repo.
 
 ## NuGet setup 
 
-By default, use the NuGet feed for https://www.nuget.org/packages/Microsoft.ML/
+By default, use the NuGet feed for the Microsoft.ML package puclicly published here: https://www.nuget.org/packages/Microsoft.ML/
 
 Build the solution to confirm there's access to the Microsoft.ML NuGet package and it is ready to run the app.
 
