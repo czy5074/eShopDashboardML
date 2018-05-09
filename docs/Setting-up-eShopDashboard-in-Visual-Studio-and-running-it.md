@@ -4,13 +4,11 @@
 
 Open the solution `eShopDashboard.sln` in the root folder of the repo.
 
-## NuGet setup for local package
+## NuGet setup 
 
-Until the ML.NET NuGet package is public, you need to install it in VS pointing to a local path, like in the following screenshot:
+By default, use the NuGet feed for https://www.nuget.org/packages/Microsoft.ML/
 
-![image](./images/vs-local-nuget.png)
-
-Build the solution to confirm there's access to the ML.NET NuGet package and it is ready to run the app.
+Build the solution to confirm there's access to the Microsoft.ML NuGet package and it is ready to run the app.
 
 ## Running the Dashboard app from Visual Studio
 
